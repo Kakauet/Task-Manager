@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tasks</title>
+
+  <!-- Fuentes y Estilos -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <!-- Flatpickr CSS -->
+  <link
+    id="flatpickrTheme"
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+
+  <!-- Hoja de Estilos Principal -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Encabezado -->
+  <header>
+    <h1>Tasks</h1>
+
+    <!-- Buscador de tareas -->
+    <div class="search-container">
+      <i class="fa-solid fa-magnifying-glass icon-theme"></i>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Buscar tareas..."
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="header-buttons">
+      <!-- Botón para cambiar de Tema -->
+      <button class="header-button" id="themeToggle">
+        <i class="fa-solid fa-moon icon-theme" id="themeIcon"></i>
+        <span>Cambiar Tema</span>
+      </button>
+      <!-- Botón Nueva Tarea -->
+      <button class="header-button" id="btnNuevaTarea">
+        <i class="fa-solid fa-plus icon-theme"></i>
+        <span>Nueva Tarea</span>
+      </button>
+      <!-- Botón para acceder al calendario -->
+      <button class="header-button" id="btnToggleCalendar">
+        <i class="fa-solid fa-calendar-days icon-theme"></i>
+        <span>Calendario</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal de Tareas -->
+  <main class="contenedor">
+    <!-- Columna: Por Hacer -->
+    <div class="columna" data-columna="por-hacer">
+      <h2>Por Hacer</h2>
+      <div class="contenedor-tareas" id="por-hacer" data-columna="por-hacer"></div>
+    </div>
+    <!-- Columna: Mi Día -->
+    <div class="columna" data-columna="mi-dia">
+      <h2>Mi Día</h2>
+      <div class="contenedor-tareas" id="mi-dia" data-columna="mi-dia"></div>
+    </div>
+    <!-- Columna: Hechas -->
+    <div class="columna" data-columna="hechas">
+      <h2>Hechas</h2>
+      <div class="contenedor-tareas" id="hechas" data-columna="hechas"></div>
+    </div>
+  </main>
+
+  <!-- Modal para Crear/Editar Tareas -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <!-- Cerrar Modal -->
+      <span class="close"><i class="fa-solid fa-xmark icon-theme"></i></span>
+      <h2 id="modal-title">Nueva Tarea</h2>
+      <form id="taskForm" autocomplete="off">
+        <input type="hidden" id="taskId" />
+
+        <!-- Agrupamos cada campo en .form-group para añadir separación en el CSS -->
+        <div class="form-group">
+          <label for="titulo">Título:</label>
+          <input type="text" id="titulo" required autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción:</label>
+          <textarea id="descripcion" autocomplete="off"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="calendar-label" for="vencimiento">
+            <i class="fa-regular fa-calendar icon-theme"></i> Fecha de Vencimiento:
+          </label>
+          <input
+            type="text"
+            id="vencimiento"
+            placeholder="Selecciona fecha..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="steps-section">
+          <h3>Pasos de la Tarea</h3>
+          <div id="stepsContainer"></div>
+          <button type="button" id="btnAddStep">
+            <i class="fa-solid fa-plus icon-theme"></i> Añadir Paso
+          </button>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-save">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
+          </button>
+          <button type="button" class="btn-danger" id="btnEliminar" style="display: none;">
+            <i class="fa-solid fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal del Calendario (Overlay) -->
+  <div id="calendarModal" class="calendar-modal">
+    <div class="calendar-modal-content">
+      <!-- Botón de cierre -->
+      <span class="calendar-close" id="btnCloseCalendar">
+        <i class="fa-solid fa-xmark icon-theme"></i>
+      </span>
+
+      <!-- Fila: Selector Modo + Flechas de nav -->
+      <div class="calendar-header-row">
+        <div class="left-container">
+          <!-- Selector de modo (semana / mes) -->
+          <div class="calendar-mode-toggle segmented-control">
+            <button id="btnWeek" class="active">Semana</button>
+            <button id="btnMonth">Mes</button>
+          </div>
+
+          <!-- Flechas para Mes (arriba/abajo) y Semana (izq/der) -->
+          <div class="calendar-nav">
+            <!-- Flechas Mes -->
+            <button id="btnPrevMonth" class="calendar-nav-button month-only" title="Mes anterior">
+              <i class="fa-solid fa-chevron-up"></i>
+            </button>
+            <button id="btnNextMonth" class="calendar-nav-button month-only" title="Mes siguiente">
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <!-- Flechas Semana -->
+            <button id="btnPrevWeek" class="calendar-nav-button week-only" title="Semana anterior">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="btnNextWeek" class="calendar-nav-button week-only" title="Semana siguiente">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="calendarTitle"></h2>
+      <!-- Contenedor dinámico para los días (semana/mes) -->
+      <ul id="calendarList"></ul>
+    </div>
+  </div>
+
+  <!-- Modal para Crear/Editar Eventos (con UI mejorada) -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content event-modal-content">
+      <!-- Botón de Cierre -->
+      <span class="close" id="eventCloseBtn"><i class="fa-solid fa-xmark icon-theme"></i></span>
+      <h2 id="eventModalTitle" class="event-title">Nuevo Evento</h2>
+      <small id="eventSubTitle" class="event-subtitle"></small>
+
+      <form id="eventForm" autocomplete="off">
+        <!-- Identificadores ocultos -->
+        <input type="hidden" id="eventId" />
+        <input type="hidden" id="eventDate" />
+
+        <div class="form-group">
+          <label for="eventTitle">Título del Evento:</label>
+          <input type="text" id="eventTitle" required autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label for="eventDesc">Descripción del Evento:</label>
+          <textarea id="eventDesc" autocomplete="off"></textarea>
+        </div>
+
+        <!-- Sección con toggle custom para marcar como calificado -->
+        <div class="form-group toggle-container">
+          <label class="switch">
+            <input type="checkbox" id="gradedEvent">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">Marcar como Calificado</span>
+        </div>
+
+        <div class="form-group" id="gradeSection" style="display: none;">
+          <label for="eventGrade">Calificación:</label>
+          <input type="text" id="eventGrade" placeholder="Introduce la calificación (sobre 10)" />
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-save">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
+          </button>
+          <button
+            type="button"
+            class="btn-danger"
+            id="btnEliminarEvento"
+            style="display: none;"
+          >
+            <i class="fa-solid fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Flatpickr principal -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Locale español para Flatpickr -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+  <!-- Lógica de la aplicación de Tareas -->
+  <script src="app.js"></script>
+  <!-- Lógica del Calendario con Vista Semanal y Mensual -->
+  <script src="calendar.js"></script>
+</body>
+</html>

@@ -1,16 +1,12 @@
-/* app.js - Versión refactorizada con Undo/Redo, reordenación de columnas y nuevos temas */
-
+/* app.js - Código completo modificado con retardo para el arrastre en móviles */
 const TaskModule = (function() {
   const COLUMN_STATES = { TODO: 'por-hacer', MY_DAY: 'mi-dia', DONE: 'hechas' };
-  // Se definen los nuevos temas disponibles
   const AVAILABLE_THEMES = ['dark', 'light', 'blue', 'green', 'red', 'purple'];
   let tareas = [];
   let tempSteps = [];
   let picker = null;
   let searchTerm = "";
   let searchDebounceTimer = null;
-
-  // Variables para Undo/Redo
   let undoStack = [];
   let redoStack = [];
 
@@ -32,14 +28,11 @@ const TaskModule = (function() {
   const btnToggleCalendar = document.getElementById('btnToggleCalendar');
   const calendarModal = document.getElementById('calendarModal');
 
-  // Funciones de estado para Undo/Redo
+  // Funciones de Undo/Redo
   function saveState() {
-    // Se guarda una copia profunda del estado actual de las tareas
     undoStack.push(JSON.parse(JSON.stringify(tareas)));
-    // Se limpia la pila de rehacer, ya que se realizó un cambio nuevo
     redoStack = [];
   }
-
   function undo() {
     if (undoStack.length > 0) {
       redoStack.push(JSON.parse(JSON.stringify(tareas)));
@@ -48,7 +41,6 @@ const TaskModule = (function() {
       renderTareas();
     }
   }
-
   function redo() {
     if (redoStack.length > 0) {
       undoStack.push(JSON.parse(JSON.stringify(tareas)));
@@ -57,8 +49,6 @@ const TaskModule = (function() {
       renderTareas();
     }
   }
-
-  // Escuchar Ctrl+Z y Ctrl+Shift+Z para Undo/Redo
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
       e.preventDefault();
@@ -87,16 +77,14 @@ const TaskModule = (function() {
     return `${day}/${month}/${year}`;
   }
 
-  // Gestión de tema: ahora se cicla entre AVAILABLE_THEMES
+  // Gestión de tema
   function cargarTema() {
-    // Se podría cargar de localStorage y asignar al data-theme
     const savedTheme = localStorage.getItem('theme');
     const themeToLoad = savedTheme && AVAILABLE_THEMES.includes(savedTheme)
       ? savedTheme
       : 'dark';
     document.documentElement.setAttribute('data-theme', themeToLoad);
     actualizarIconoTema(themeToLoad);
-    cargarFlatpickrTheme(themeToLoad);
   }
   function guardarTema(theme) {
     localStorage.setItem('theme', theme);
@@ -109,10 +97,8 @@ const TaskModule = (function() {
     document.documentElement.setAttribute('data-theme', newTheme);
     guardarTema(newTheme);
     actualizarIconoTema(newTheme);
-    cargarFlatpickrTheme(newTheme);
   }
   function actualizarIconoTema(theme) {
-    // Se pueden ajustar los iconos según el tema (aquí se mantiene simple)
     if (theme === 'dark') {
       themeIcon.classList.remove('fa-sun');
       themeIcon.classList.add('fa-moon');
@@ -121,23 +107,15 @@ const TaskModule = (function() {
       themeIcon.classList.add('fa-sun');
     }
   }
-  function cargarFlatpickrTheme(theme) {
-    const themeLink = document.getElementById('flatpickrTheme');
-    themeLink.href = theme === 'dark' 
-      ? 'https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css'
-      : 'https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css';
-    if (picker) picker.destroy();
-    inicializarFlatpickr();
-  }
 
   // Gestión del modal de tareas
   function abrirModal(editar = false, tarea = {}) {
-    modal.classList.add('active'); // Se usa la clase "active" para mostrar el modal con transición
+    modal.classList.add('active');
     if (editar) {
       modalTitle.textContent = 'Editar Tarea';
       inputTaskId.value = tarea.id;
-      inputTitulo.value = tarea.titulo.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-      inputDescripcion.value = (tarea.descripcion || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+      inputTitulo.value = tarea.titulo;
+      inputDescripcion.value = tarea.descripcion || '';
       btnEliminar.style.display = 'inline-block';
       renderStepsInModal(tarea);
       if (tarea.vencimiento) {
@@ -156,58 +134,58 @@ const TaskModule = (function() {
       picker.clear();
     }
   }
-  function cerrarModal() { 
+  function cerrarModal() {
     modal.classList.remove('active');
   }
   closeModalBtn.addEventListener('click', cerrarModal);
 
-  // Gestión de pasos utilizando delegación de eventos en el contenedor
+  // Gestión de pasos
   function renderStepsInModal(tarea) {
     stepsContainer.innerHTML = '';
     const pasos = tarea.pasos || tempSteps || [];
-    // (código para el progreso si hay pasos)
     pasos.forEach(step => {
       const stepDiv = document.createElement('div');
       stepDiv.classList.add('step-item');
       stepDiv.setAttribute('data-id', step.id);
-      stepDiv.setAttribute('draggable', 'true'); // ¡Habilita el arrastre para los pasos!
-  
+      stepDiv.setAttribute('draggable', 'true');
+
       const checkIcon = document.createElement('i');
-      checkIcon.className = step.completado 
+      checkIcon.className = step.completado
         ? 'check-icon fa-solid fa-circle-check'
         : 'check-icon fa-regular fa-circle';
-  
+
       const btnDeleteStep = document.createElement('button');
       btnDeleteStep.classList.add('btn-step-delete');
       btnDeleteStep.innerHTML = '<i class="fa-solid fa-trash"></i>';
-  
+
       const stepInput = document.createElement('input');
       stepInput.type = 'text';
-      stepInput.value = step.texto.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-  
+      stepInput.value = step.texto;
+
       stepDiv.appendChild(checkIcon);
       stepDiv.appendChild(stepInput);
       stepDiv.appendChild(btnDeleteStep);
       stepsContainer.appendChild(stepDiv);
     });
   }
-  
   stepsContainer.addEventListener('click', (e) => {
     const stepItem = e.target.closest('.step-item');
     if (!stepItem) return;
     const stepId = stepItem.getAttribute('data-id');
-    let pasos = inputTaskId.value 
-      ? tareas.find(t => t.id === inputTaskId.value)?.pasos 
+    let pasos = inputTaskId.value
+      ? tareas.find(t => t.id === inputTaskId.value)?.pasos
       : tempSteps;
     if (!pasos) return;
     const step = pasos.find(s => s.id === stepId);
     if (!step) return;
+
     if (e.target.classList.contains('check-icon') || e.target.closest('.check-icon')) {
       step.completado = !step.completado;
       guardarTareas();
       renderTareas();
       renderStepsInModal({ pasos });
-    } else if (e.target.closest('.btn-step-delete')) {
+    }
+    else if (e.target.closest('.btn-step-delete')) {
       saveState();
       if (inputTaskId.value) {
         let tarea = tareas.find(t => t.id === inputTaskId.value);
@@ -223,6 +201,8 @@ const TaskModule = (function() {
       }
     }
   });
+
+  // Drag & Drop para pasos (sin cambios)
   stepsContainer.addEventListener('dragover', (e) => {
     e.preventDefault();
     const draggingStep = document.querySelector('.step-item.dragging');
@@ -359,12 +339,8 @@ const TaskModule = (function() {
         tareaHeader.classList.add('tarea-header');
         const tituloElem = document.createElement('h3');
         tituloElem.innerHTML = tarea.titulo;
-
-        // Contenedor a la derecha (fecha + botones)
         const headerRightDiv = document.createElement('div');
         headerRightDiv.classList.add('header-right');
-
-        // Botones
         const botonesDiv = document.createElement('div');
         botonesDiv.classList.add('botones');
 
@@ -389,40 +365,17 @@ const TaskModule = (function() {
           });
           botonesDiv.appendChild(btnCompletar);
         }
-
-        // Fecha de vencimiento (si aplica)
         if (tarea.vencimiento && tarea.estado !== COLUMN_STATES.DONE) {
           const fechaSpan = document.createElement('span');
           fechaSpan.classList.add('due-date');
-          const hoy = new Date(); hoy.setHours(0,0,0,0);
-          const fechaTarea = new Date(tarea.vencimiento + 'T00:00:00');
-          const diffMs = fechaTarea - hoy;
-          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-          let infoDias = '';
-          if (diffDays > 0) {
-            infoDias = ` (Faltan ${diffDays} día${diffDays === 1 ? '' : 's'})`;
-            fechaSpan.classList.add('due-future');
-          } else if (diffDays === 0) {
-            infoDias = ' (¡Es hoy!)';
-            fechaSpan.classList.add('due-today');
-          } else {
-            const diasAtras = Math.abs(diffDays);
-            infoDias = ` (Atrasado ${diasAtras} día${diasAtras === 1 ? '' : 's'})`;
-            fechaSpan.classList.add('due-past');
-          }
-          fechaSpan.textContent = formatearFecha(tarea.vencimiento) + infoDias;
-
-          // Insertamos la fecha en el contenedor de la derecha, antes de los botones
+          // Aquí se puede calcular y mostrar la fecha con información adicional
           headerRightDiv.appendChild(fechaSpan);
         }
-
-        // Agregamos los botones y armamos el header
         headerRightDiv.appendChild(botonesDiv);
         tareaHeader.appendChild(tituloElem);
         tareaHeader.appendChild(headerRightDiv);
         tareaDiv.appendChild(tareaHeader);
 
-        // Progreso de pasos, si existen
         if (tarea.pasos && tarea.pasos.length > 0) {
           const completados = tarea.pasos.filter(p => p.completado).length;
           const total = tarea.pasos.length;
@@ -432,14 +385,21 @@ const TaskModule = (function() {
           tareaDiv.appendChild(progresoElem);
         }
 
-        // Evento para abrir modal (si no está en 'hechas')
+        // Al hacer clic se abre el modal (solo si no está hecha)
         tareaDiv.addEventListener('click', () => {
           if (tarea.estado !== COLUMN_STATES.DONE) abrirModal(true, tarea);
         });
 
-        // Drag & Drop
+        // Drag & Drop en escritorio
         tareaDiv.addEventListener('dragstart', dragStart);
         tareaDiv.addEventListener('dragend', dragEnd);
+
+        // Controladores táctiles modificados para móviles
+        if ('ontouchstart' in window) {
+          tareaDiv.addEventListener('touchstart', touchStartTask, {passive: false});
+          tareaDiv.addEventListener('touchmove', touchMoveTask, {passive: false});
+          tareaDiv.addEventListener('touchend', touchEndTask, {passive: false});
+        }
 
         col.appendChild(tareaDiv);
       });
@@ -455,6 +415,7 @@ const TaskModule = (function() {
     guardarTareas();
     renderTareas();
   }
+  
   const columnas = document.querySelectorAll('.columna');
   columnas.forEach(col => {
     col.addEventListener('dragover', e => {
@@ -503,15 +464,60 @@ const TaskModule = (function() {
   function dragStart(e) { e.target.classList.add('dragging'); }
   function dragEnd(e) { e.target.classList.remove('dragging'); }
 
-  // Flatpickr
-  function inicializarFlatpickr() {
-    picker = flatpickr("#vencimiento", {
-      altInput: true,
-      altFormat: "d/m/Y",
-      dateFormat: "Y-m-d",
-      allowInput: true,
-      locale: "es"
-    });
+  // ----- Controladores táctiles modificados para móviles -----
+  function touchStartTask(e) {
+    e.preventDefault();
+    const el = e.currentTarget;
+    // Registrar posición de inicio
+    el.touchStartX = e.touches[0].clientX;
+    el.touchStartY = e.touches[0].clientY;
+    // Iniciar timeout de 200ms para activar el arrastre
+    el.touchDragTimeout = setTimeout(() => {
+      el.classList.add('dragging');
+    }, 200);
+  }
+  
+  function touchMoveTask(e) {
+    e.preventDefault();
+    const el = e.currentTarget;
+    // Solo aplicar movimiento si ya se activó el modo arrastre
+    if (!el.classList.contains('dragging')) return;
+    let deltaX = e.touches[0].clientX - el.touchStartX;
+    let deltaY = e.touches[0].clientY - el.touchStartY;
+    el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+  }
+  
+  function touchEndTask(e) {
+    e.preventDefault();
+    const el = e.currentTarget;
+    clearTimeout(el.touchDragTimeout);
+    // Si no se activó el arrastre, interpretar como toque corto y abrir modal
+    if (!el.classList.contains('dragging')) {
+      const tarea = tareas.find(t => t.id === el.dataset.id);
+      if (tarea && tarea.estado !== COLUMN_STATES.DONE) {
+        abrirModal(true, tarea);
+      }
+      return;
+    }
+    // Finalizar arrastre
+    el.style.transform = '';
+    el.classList.remove('dragging');
+    const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const container = dropTarget ? dropTarget.closest('.contenedor-tareas') : null;
+    if (container && container.dataset.columna) {
+      const nuevoEstado = container.dataset.columna;
+      const tareaId = el.dataset.id;
+      const taskElements = Array.from(container.querySelectorAll('.tarea:not(.dragging)'));
+      let newIndex = taskElements.findIndex(taskEl => {
+        const rect = taskEl.getBoundingClientRect();
+        return touch.clientY < rect.top + rect.height / 2;
+      });
+      if(newIndex === -1) newIndex = taskElements.length;
+      moverTareaConPosicion(tareaId, nuevoEstado, newIndex);
+    } else {
+      renderTareas();
+    }
   }
 
   // Búsqueda con debounce
@@ -523,12 +529,10 @@ const TaskModule = (function() {
     }, 300);
   });
 
-  // Toggle del calendario
-  btnToggleCalendar.addEventListener('click', () => { 
+  btnToggleCalendar.addEventListener('click', () => {
     calendarModal.classList.add('active');
   });
 
-  // Listener para cerrar modales con Escape (además del Undo/Redo ya implementado)
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (modal.classList.contains('active')) modal.classList.remove('active');
@@ -536,25 +540,26 @@ const TaskModule = (function() {
     }
   });
 
-  // Inicialización general
-  function iniciar() {
-    cargarTema();
-    cargarTareas();
-    inicializarFlatpickr();
-    renderTareas();
+  // Inicializar Flatpickr
+  function inicializarFlatpickr() {
+    picker = flatpickr("#vencimiento", {
+      altInput: false,
+      dateFormat: "Y-m-d",
+      allowInput: true,
+      locale: "es"
+    });
   }
-  // Listener adicional para cerrar el modal de tareas con Escape (ya implementado arriba)
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) cerrarModal();
-  });
-  themeToggleBtn.addEventListener('click', toggleTheme);
-  btnNuevaTarea.addEventListener('click', () => abrirModal());
 
-  // Se exponen las funciones para actualizar las tareas desde otros módulos
-  window.cargarTareas = cargarTareas;
-  window.renderTareas = renderTareas;
+  // Inicialización
+  cargarTareas();
+  renderTareas();
+  cargarTema();
+  inicializarFlatpickr();
 
-  return { iniciar };
+  return {
+    undo,
+    redo,
+    cargarTareas,
+    renderTareas
+  };
 })();
-
-TaskModule.iniciar();

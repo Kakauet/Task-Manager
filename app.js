@@ -1,4 +1,6 @@
-/* app.js - Versión refactorizada con Undo/Redo, reordenación de columnas y nuevos temas */
+/* app.js - Versión refactorizada con Undo/Redo, reordenación de columnas, nuevos temas, 
+   mejora en arrastre táctil con clon flotante y funcionalidad de mover tareas entre paneles en móvil.
+*/
 
 const TaskModule = (function() {
   const COLUMN_STATES = { TODO: 'por-hacer', MY_DAY: 'mi-dia', DONE: 'hechas' };
@@ -34,9 +36,7 @@ const TaskModule = (function() {
 
   // Funciones de estado para Undo/Redo
   function saveState() {
-    // Se guarda una copia profunda del estado actual de las tareas
     undoStack.push(JSON.parse(JSON.stringify(tareas)));
-    // Se limpia la pila de rehacer, ya que se realizó un cambio nuevo
     redoStack = [];
   }
 
@@ -172,6 +172,10 @@ const TaskModule = (function() {
       stepInput.type = 'text';
       stepInput.value = step.texto.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
 
+      stepInput.addEventListener('input', (e) => {
+        step.texto = e.target.value;
+      });
+
       stepDiv.appendChild(checkIcon);
       stepDiv.appendChild(stepInput);
       stepDiv.appendChild(btnDeleteStep);
@@ -190,15 +194,12 @@ const TaskModule = (function() {
     const step = pasos.find(s => s.id === stepId);
     if (!step) return;
 
-    // Completar paso
     if (e.target.classList.contains('check-icon') || e.target.closest('.check-icon')) {
       step.completado = !step.completado;
       guardarTareas();
       renderTareas();
       renderStepsInModal({ pasos });
-    }
-    // Eliminar paso
-    else if (e.target.closest('.btn-step-delete')) {
+    } else if (e.target.closest('.btn-step-delete')) {
       saveState();
       if (inputTaskId.value) {
         let tarea = tareas.find(t => t.id === inputTaskId.value);
@@ -334,18 +335,20 @@ const TaskModule = (function() {
     if (data) tareas = JSON.parse(data);
   }
 
-  // Función renderTareas modificada para mostrar placeholder en columnas vacías
   function renderTareas() {
     const columnas = document.querySelectorAll('.contenedor-tareas');
     columnas.forEach(col => {
       const estado = col.dataset.columna;
       col.innerHTML = '';
-      const tasksInColumn = tareas.filter(t => t.estado === estado)
-        .filter(t => t.titulo.toLowerCase().includes(searchTerm) || (t.descripcion || '').toLowerCase().includes(searchTerm))
+      const tasksInColumn = tareas
+        .filter(t => t.estado === estado)
+        .filter(t => 
+          t.titulo.toLowerCase().includes(searchTerm) ||
+          (t.descripcion || '').toLowerCase().includes(searchTerm)
+        )
         .sort((a, b) => (a.orden || 0) - (b.orden || 0));
       
       if (tasksInColumn.length === 0) {
-        // Si no hay tareas, se muestra un placeholder
         const placeholder = document.createElement('div');
         placeholder.classList.add('placeholder');
         let placeholderText = '';
@@ -360,10 +363,11 @@ const TaskModule = (function() {
           placeholderText = 'Marca una tarea como hecha';
           placeholderIcon = '<i class="fa-solid fa-check"></i>';
         }
-        placeholder.innerHTML = `<div style="height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; color: var(--text-secondary);">
-                                    ${placeholderIcon}
-                                    <span>${placeholderText}</span>
-                                  </div>`;
+        placeholder.innerHTML = `
+          <div style="height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; color: var(--text-secondary);">
+            ${placeholderIcon}
+            <span>${placeholderText}</span>
+          </div>`;
         col.appendChild(placeholder);
       } else {
         tasksInColumn.forEach(tarea => {
@@ -372,17 +376,14 @@ const TaskModule = (function() {
           tareaDiv.setAttribute('draggable', 'true');
           tareaDiv.dataset.id = tarea.id;
 
-          // Encabezado de la tarea
           const tareaHeader = document.createElement('div');
           tareaHeader.classList.add('tarea-header');
           const tituloElem = document.createElement('h3');
           tituloElem.innerHTML = tarea.titulo;
 
-          // Contenedor a la derecha (fecha + botones)
           const headerRightDiv = document.createElement('div');
           headerRightDiv.classList.add('header-right');
 
-          // Botones
           const botonesDiv = document.createElement('div');
           botonesDiv.classList.add('botones');
 
@@ -408,7 +409,6 @@ const TaskModule = (function() {
             botonesDiv.appendChild(btnCompletar);
           }
 
-          // Fecha de vencimiento (si aplica)
           if (tarea.vencimiento && tarea.estado !== COLUMN_STATES.DONE) {
             const fechaSpan = document.createElement('span');
             fechaSpan.classList.add('due-date');
@@ -437,7 +437,6 @@ const TaskModule = (function() {
           tareaHeader.appendChild(headerRightDiv);
           tareaDiv.appendChild(tareaHeader);
 
-          // Progreso de pasos, si existen
           if (tarea.pasos && tarea.pasos.length > 0) {
             const completados = tarea.pasos.filter(p => p.completado).length;
             const total = tarea.pasos.length;
@@ -447,16 +446,13 @@ const TaskModule = (function() {
             tareaDiv.appendChild(progresoElem);
           }
 
-          // Abrir modal para editar tarea
           tareaDiv.addEventListener('click', () => {
             if (tarea.estado !== COLUMN_STATES.DONE) abrirModal(true, tarea);
           });
 
-          // Drag & Drop en escritorio
           tareaDiv.addEventListener('dragstart', dragStart);
           tareaDiv.addEventListener('dragend', dragEnd);
 
-          // Controladores táctiles
           if ('ontouchstart' in window) {
             tareaDiv.addEventListener('touchstart', touchStartTask, {passive: false});
             tareaDiv.addEventListener('touchmove', touchMoveTask, {passive: false});
@@ -478,6 +474,7 @@ const TaskModule = (function() {
     guardarTareas();
     renderTareas();
   }
+
   const columnas = document.querySelectorAll('.columna');
   columnas.forEach(col => {
     col.addEventListener('dragover', e => {
@@ -506,8 +503,11 @@ const TaskModule = (function() {
     if (!tarea) return;
     tarea.estado = nuevoEstado;
     const sameStateTasks = tareas.filter(t => t.estado === nuevoEstado && t.id !== id);
-    if (newIndex < 0 || newIndex > sameStateTasks.length) sameStateTasks.push(tarea);
-    else sameStateTasks.splice(newIndex, 0, tarea);
+    if (newIndex < 0 || newIndex > sameStateTasks.length) {
+      sameStateTasks.push(tarea);
+    } else {
+      sameStateTasks.splice(newIndex, 0, tarea);
+    }
     sameStateTasks.forEach((t, i) => { t.orden = i; });
     const otherTasks = tareas.filter(t => t.estado !== nuevoEstado);
     tareas = [...otherTasks, ...sameStateTasks];
@@ -526,46 +526,105 @@ const TaskModule = (function() {
   function dragStart(e) { e.target.classList.add('dragging'); }
   function dragEnd(e) { e.target.classList.remove('dragging'); }
 
-  // --- Controladores táctiles para tareas ---
+  // Controladores táctiles para tareas
   function touchStartTask(e) {
-    e.preventDefault();
     const el = e.currentTarget;
-    el.classList.add('dragging');
+    el.originalRect = el.getBoundingClientRect();
     el.touchStartX = e.touches[0].clientX;
     el.touchStartY = e.touches[0].clientY;
+    el.longPressTimeout = setTimeout(() => {
+      const clone = el.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.left = el.originalRect.left + 'px';
+      clone.style.top = el.originalRect.top + 'px';
+      clone.style.width = el.originalRect.width + 'px';
+      clone.style.zIndex = 1000;
+      clone.style.pointerEvents = 'none';
+      document.body.appendChild(clone);
+      el.floatingClone = clone;
+      el.isDragging = true;
+      el.classList.add('dragging');
+      el.style.visibility = 'hidden';
+    }, 300);
   }
+
   function touchMoveTask(e) {
-    e.preventDefault();
     const el = e.currentTarget;
-    let deltaX = e.touches[0].clientX - el.touchStartX;
-    let deltaY = e.touches[0].clientY - el.touchStartY;
-    el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-  }
-  function touchEndTask(e) {
-    e.preventDefault();
-    const el = e.currentTarget;
-    el.style.transform = '';
-    el.classList.remove('dragging');
-    // Detectar el contenedor destino
-    const touch = e.changedTouches[0];
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const container = dropTarget ? dropTarget.closest('.contenedor-tareas') : null;
-    if (container && container.dataset.columna) {
-      const nuevoEstado = container.dataset.columna;
-      const tareaId = el.dataset.id;
-      const taskElements = Array.from(container.querySelectorAll('.tarea:not(.dragging)'));
-      let newIndex = taskElements.findIndex(taskEl => {
-        const rect = taskEl.getBoundingClientRect();
-        return touch.clientY < rect.top + rect.height / 2;
-      });
-      if(newIndex === -1) newIndex = taskElements.length;
-      moverTareaConPosicion(tareaId, nuevoEstado, newIndex);
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - el.touchStartX;
+    const deltaY = touch.clientY - el.touchStartY;
+    
+    if (el.isDragging && el.floatingClone) {
+      const newLeft = el.originalRect.left + deltaX;
+      const newTop = el.originalRect.top + deltaY;
+      el.floatingClone.style.left = newLeft + 'px';
+      el.floatingClone.style.top = newTop + 'px';
     } else {
-      renderTareas();
+      if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 10) {
+        clearTimeout(el.longPressTimeout);
+      }
+    }
+    
+    // Resaltar botón de pestaña móvil si se toca
+    const potentialTab = document.elementFromPoint(touch.clientX, touch.clientY);
+    const tabButton = potentialTab ? potentialTab.closest('.mobile-tabs .tab-button') : null;
+    document.querySelectorAll('.mobile-tabs .tab-button').forEach(btn => btn.classList.remove('drop-target'));
+    if (tabButton) {
+      tabButton.classList.add('drop-target');
     }
   }
 
-  // Inicializar Flatpickr con estilo “material_blue”
+  function touchEndTask(e) {
+    const el = e.currentTarget;
+    clearTimeout(el.longPressTimeout);
+    document.querySelectorAll('.mobile-tabs .tab-button').forEach(btn => btn.classList.remove('drop-target'));
+    
+    if (!el.isDragging) {
+      return;
+    }
+    const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    const tareaId = el.dataset.id;
+    const tarea = tareas.find(t => t.id === tareaId);
+    
+    // Si se suelta sobre un botón de pestaña móvil, mover la tarea a ese panel (si es distinto)
+    const mobileTabButton = dropTarget ? dropTarget.closest('.mobile-tabs .tab-button') : null;
+    if (mobileTabButton && mobileTabButton.dataset.tab) {
+      const nuevoEstado = mobileTabButton.dataset.tab;
+      if (tarea && tarea.estado !== nuevoEstado) {
+        moverTarea(tareaId, nuevoEstado);
+      }
+    } else {
+      // Si se suelta sobre el contenedor de tareas
+      const container = dropTarget ? dropTarget.closest('.contenedor-tareas') : null;
+      if (container && container.dataset.columna) {
+        if (window.innerWidth <= 768 && tarea && container.dataset.columna === tarea.estado) {
+          // En móvil, si se suelta en el mismo panel, no se reordena
+          renderTareas();
+        } else {
+          let taskElements = Array.from(container.querySelectorAll('.tarea:not(.dragging)'));
+          let newIndex = taskElements.findIndex(taskEl => {
+            const rect = taskEl.getBoundingClientRect();
+            return touch.clientY < rect.top + rect.height / 2;
+          });
+          if(newIndex === -1) newIndex = taskElements.length;
+          moverTareaConPosicion(tareaId, container.dataset.columna, newIndex);
+        }
+      } else {
+        renderTareas();
+      }
+    }
+    if (el.floatingClone) {
+      document.body.removeChild(el.floatingClone);
+      el.floatingClone = null;
+    }
+    el.style.visibility = '';
+    el.isDragging = false;
+    el.classList.remove('dragging');
+  }
+
+  // Inicialización de Flatpickr
   function inicializarFlatpickr() {
     picker = flatpickr("#vencimiento", {
       altInput: false,
@@ -618,3 +677,4 @@ const TaskModule = (function() {
 })();
 
 TaskModule.iniciar();
+

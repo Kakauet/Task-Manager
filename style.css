@@ -717,6 +717,7 @@ input:checked + .slider:before {
   }
 }
 
+/* Media query para pantallas medianas */
 @media (min-width: 1200px) and (orientation: landscape) {
   .contenedor {
     flex-direction: row;
@@ -729,6 +730,7 @@ input:checked + .slider:before {
   }
 }
 
+/* Media query para tablets */
 @media (min-width: 768px) and (max-width: 1024px) {
   .contenedor {
     flex-wrap: wrap;
@@ -806,6 +808,11 @@ input:checked + .slider:before {
     width: 90%;
     height: auto;
   }
+  /* Aquí se hace que los menús de creación de tareas y eventos sean mucho más anchos en móvil */
+  #modal .modal-content,
+  #eventModal .modal-content {
+    width: 90%;
+  }
 }
 
 /* =======================
@@ -836,4 +843,18 @@ input:checked + .slider:before {
 .mobile-tabs .tab-button.active {
   background-color: var(--accent-color);
   color: #fff;
+}
+
+/* Estilos para el placeholder en columnas vacías */
+.placeholder {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+.placeholder i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
 }

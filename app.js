@@ -87,9 +87,8 @@ const TaskModule = (function() {
     return `${day}/${month}/${year}`;
   }
 
-  // Gestión de tema: ahora se cicla entre AVAILABLE_THEMES
+  // Gestión del tema
   function cargarTema() {
-    // Se podría cargar de localStorage y asignar al data-theme
     const savedTheme = localStorage.getItem('theme');
     const themeToLoad = savedTheme && AVAILABLE_THEMES.includes(savedTheme)
       ? savedTheme
@@ -335,6 +334,7 @@ const TaskModule = (function() {
     if (data) tareas = JSON.parse(data);
   }
 
+  // Función renderTareas modificada para mostrar placeholder en columnas vacías
   function renderTareas() {
     const columnas = document.querySelectorAll('.contenedor-tareas');
     columnas.forEach(col => {
@@ -343,105 +343,129 @@ const TaskModule = (function() {
       const tasksInColumn = tareas.filter(t => t.estado === estado)
         .filter(t => t.titulo.toLowerCase().includes(searchTerm) || (t.descripcion || '').toLowerCase().includes(searchTerm))
         .sort((a, b) => (a.orden || 0) - (b.orden || 0));
-      tasksInColumn.forEach(tarea => {
-        const tareaDiv = document.createElement('div');
-        tareaDiv.classList.add('tarea');
-        tareaDiv.setAttribute('draggable', 'true');
-        tareaDiv.dataset.id = tarea.id;
-
-        // Encabezado de la tarea
-        const tareaHeader = document.createElement('div');
-        tareaHeader.classList.add('tarea-header');
-        const tituloElem = document.createElement('h3');
-        tituloElem.innerHTML = tarea.titulo;
-
-        // Contenedor a la derecha (fecha + botones)
-        const headerRightDiv = document.createElement('div');
-        headerRightDiv.classList.add('header-right');
-
-        // Botones
-        const botonesDiv = document.createElement('div');
-        botonesDiv.classList.add('botones');
-
-        if (tarea.estado === COLUMN_STATES.TODO) {
-          const btnMover = document.createElement('button');
-          btnMover.classList.add('btn-move');
-          btnMover.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Mi Día';
-          btnMover.addEventListener('click', e => {
-            e.stopPropagation();
-            saveState();
-            moverTarea(tarea.id, COLUMN_STATES.MY_DAY);
-          });
-          botonesDiv.appendChild(btnMover);
-        } else if (tarea.estado === COLUMN_STATES.MY_DAY) {
-          const btnCompletar = document.createElement('button');
-          btnCompletar.classList.add('btn-complete');
-          btnCompletar.innerHTML = '<i class="fa-solid fa-check"></i> Hecha';
-          btnCompletar.addEventListener('click', e => {
-            e.stopPropagation();
-            saveState();
-            moverTarea(tarea.id, COLUMN_STATES.DONE);
-          });
-          botonesDiv.appendChild(btnCompletar);
+      
+      if (tasksInColumn.length === 0) {
+        // Si no hay tareas, se muestra un placeholder
+        const placeholder = document.createElement('div');
+        placeholder.classList.add('placeholder');
+        let placeholderText = '';
+        let placeholderIcon = '';
+        if (estado === COLUMN_STATES.TODO) {
+          placeholderText = 'Crea una tarea';
+          placeholderIcon = '<i class="fa-solid fa-plus"></i>';
+        } else if (estado === COLUMN_STATES.MY_DAY) {
+          placeholderText = 'Añade una tarea a tu día';
+          placeholderIcon = '<i class="fa-solid fa-sun"></i>';
+        } else if (estado === COLUMN_STATES.DONE) {
+          placeholderText = 'Marca una tarea como hecha';
+          placeholderIcon = '<i class="fa-solid fa-check"></i>';
         }
+        placeholder.innerHTML = `<div style="height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; color: var(--text-secondary);">
+                                    ${placeholderIcon}
+                                    <span>${placeholderText}</span>
+                                  </div>`;
+        col.appendChild(placeholder);
+      } else {
+        tasksInColumn.forEach(tarea => {
+          const tareaDiv = document.createElement('div');
+          tareaDiv.classList.add('tarea');
+          tareaDiv.setAttribute('draggable', 'true');
+          tareaDiv.dataset.id = tarea.id;
 
-        // Fecha de vencimiento (si aplica)
-        if (tarea.vencimiento && tarea.estado !== COLUMN_STATES.DONE) {
-          const fechaSpan = document.createElement('span');
-          fechaSpan.classList.add('due-date');
-          const hoy = new Date(); hoy.setHours(0,0,0,0);
-          const fechaTarea = new Date(tarea.vencimiento + 'T00:00:00');
-          const diffMs = fechaTarea - hoy;
-          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-          let infoDias = '';
-          if (diffDays > 0) {
-            infoDias = ` (Faltan ${diffDays} día${diffDays === 1 ? '' : 's'})`;
-            fechaSpan.classList.add('due-future');
-          } else if (diffDays === 0) {
-            infoDias = ' (¡Es hoy!)';
-            fechaSpan.classList.add('due-today');
-          } else {
-            const diasAtras = Math.abs(diffDays);
-            infoDias = ` (Atrasado ${diasAtras} día${diasAtras === 1 ? '' : 's'})`;
-            fechaSpan.classList.add('due-past');
+          // Encabezado de la tarea
+          const tareaHeader = document.createElement('div');
+          tareaHeader.classList.add('tarea-header');
+          const tituloElem = document.createElement('h3');
+          tituloElem.innerHTML = tarea.titulo;
+
+          // Contenedor a la derecha (fecha + botones)
+          const headerRightDiv = document.createElement('div');
+          headerRightDiv.classList.add('header-right');
+
+          // Botones
+          const botonesDiv = document.createElement('div');
+          botonesDiv.classList.add('botones');
+
+          if (tarea.estado === COLUMN_STATES.TODO) {
+            const btnMover = document.createElement('button');
+            btnMover.classList.add('btn-move');
+            btnMover.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Mi Día';
+            btnMover.addEventListener('click', e => {
+              e.stopPropagation();
+              saveState();
+              moverTarea(tarea.id, COLUMN_STATES.MY_DAY);
+            });
+            botonesDiv.appendChild(btnMover);
+          } else if (tarea.estado === COLUMN_STATES.MY_DAY) {
+            const btnCompletar = document.createElement('button');
+            btnCompletar.classList.add('btn-complete');
+            btnCompletar.innerHTML = '<i class="fa-solid fa-check"></i> Hecha';
+            btnCompletar.addEventListener('click', e => {
+              e.stopPropagation();
+              saveState();
+              moverTarea(tarea.id, COLUMN_STATES.DONE);
+            });
+            botonesDiv.appendChild(btnCompletar);
           }
-          fechaSpan.textContent = formatearFecha(tarea.vencimiento) + infoDias;
-          headerRightDiv.appendChild(fechaSpan);
-        }
 
-        headerRightDiv.appendChild(botonesDiv);
-        tareaHeader.appendChild(tituloElem);
-        tareaHeader.appendChild(headerRightDiv);
-        tareaDiv.appendChild(tareaHeader);
+          // Fecha de vencimiento (si aplica)
+          if (tarea.vencimiento && tarea.estado !== COLUMN_STATES.DONE) {
+            const fechaSpan = document.createElement('span');
+            fechaSpan.classList.add('due-date');
+            const hoy = new Date(); hoy.setHours(0,0,0,0);
+            const fechaTarea = new Date(tarea.vencimiento + 'T00:00:00');
+            const diffMs = fechaTarea - hoy;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            let infoDias = '';
+            if (diffDays > 0) {
+              infoDias = ` (Faltan ${diffDays} día${diffDays === 1 ? '' : 's'})`;
+              fechaSpan.classList.add('due-future');
+            } else if (diffDays === 0) {
+              infoDias = ' (¡Es hoy!)';
+              fechaSpan.classList.add('due-today');
+            } else {
+              const diasAtras = Math.abs(diffDays);
+              infoDias = ` (Atrasado ${diasAtras} día${diasAtras === 1 ? '' : 's'})`;
+              fechaSpan.classList.add('due-past');
+            }
+            fechaSpan.textContent = formatearFecha(tarea.vencimiento) + infoDias;
+            headerRightDiv.appendChild(fechaSpan);
+          }
 
-        // Progreso de pasos, si existen
-        if (tarea.pasos && tarea.pasos.length > 0) {
-          const completados = tarea.pasos.filter(p => p.completado).length;
-          const total = tarea.pasos.length;
-          const progresoElem = document.createElement('p');
-          progresoElem.classList.add('progreso');
-          progresoElem.textContent = `${completados} de ${total} pasos completados`;
-          tareaDiv.appendChild(progresoElem);
-        }
+          headerRightDiv.appendChild(botonesDiv);
+          tareaHeader.appendChild(tituloElem);
+          tareaHeader.appendChild(headerRightDiv);
+          tareaDiv.appendChild(tareaHeader);
 
-        // Abrir modal
-        tareaDiv.addEventListener('click', () => {
-          if (tarea.estado !== COLUMN_STATES.DONE) abrirModal(true, tarea);
+          // Progreso de pasos, si existen
+          if (tarea.pasos && tarea.pasos.length > 0) {
+            const completados = tarea.pasos.filter(p => p.completado).length;
+            const total = tarea.pasos.length;
+            const progresoElem = document.createElement('p');
+            progresoElem.classList.add('progreso');
+            progresoElem.textContent = `${completados} de ${total} pasos completados`;
+            tareaDiv.appendChild(progresoElem);
+          }
+
+          // Abrir modal para editar tarea
+          tareaDiv.addEventListener('click', () => {
+            if (tarea.estado !== COLUMN_STATES.DONE) abrirModal(true, tarea);
+          });
+
+          // Drag & Drop en escritorio
+          tareaDiv.addEventListener('dragstart', dragStart);
+          tareaDiv.addEventListener('dragend', dragEnd);
+
+          // Controladores táctiles
+          if ('ontouchstart' in window) {
+            tareaDiv.addEventListener('touchstart', touchStartTask, {passive: false});
+            tareaDiv.addEventListener('touchmove', touchMoveTask, {passive: false});
+            tareaDiv.addEventListener('touchend', touchEndTask, {passive: false});
+          }
+
+          col.appendChild(tareaDiv);
         });
-
-        // Drag & Drop en escritorio
-        tareaDiv.addEventListener('dragstart', dragStart);
-        tareaDiv.addEventListener('dragend', dragEnd);
-
-        // Controladores táctiles
-        if ('ontouchstart' in window) {
-          tareaDiv.addEventListener('touchstart', touchStartTask, {passive: false});
-          tareaDiv.addEventListener('touchmove', touchMoveTask, {passive: false});
-          tareaDiv.addEventListener('touchend', touchEndTask, {passive: false});
-        }
-
-        col.appendChild(tareaDiv);
-      });
+      }
     });
   }
 
@@ -544,8 +568,8 @@ const TaskModule = (function() {
   // Inicializar Flatpickr con estilo “material_blue”
   function inicializarFlatpickr() {
     picker = flatpickr("#vencimiento", {
-      altInput: false,         // Usar el input clásico
-      dateFormat: "Y-m-d",     // Formato real guardado
+      altInput: false,
+      dateFormat: "Y-m-d",
       allowInput: true,
       locale: "es"
     });

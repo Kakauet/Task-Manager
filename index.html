@@ -14,11 +14,12 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
   />
-  <!-- Flatpickr CSS -->
+
+  <!-- Flatpickr CSS (Fijamos "material_blue") -->
   <link
     id="flatpickrTheme"
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
   />
   <link
     rel="stylesheet"
@@ -40,16 +41,15 @@
       <input
         type="text"
         id="searchInput"
-        placeholder="Buscar tareas..."
+        placeholder="Buscar tarea..."
         autocomplete="off"
       />
     </div>
 
     <div class="header-buttons">
-      <!-- Botón para cambiar de Tema -->
+      <!-- Botón para cambiar de Tema (solo ícono) -->
       <button class="header-button" id="themeToggle">
         <i class="fa-solid fa-moon icon-theme" id="themeIcon"></i>
-        <span>Cambiar Tema</span>
       </button>
       <!-- Botón Nueva Tarea -->
       <button class="header-button" id="btnNuevaTarea">
@@ -63,6 +63,13 @@
       </button>
     </div>
   </header>
+
+  <!-- Menú de pestañas para móviles (visible solo en modo móvil) -->
+  <div class="mobile-tabs">
+    <button data-tab="por-hacer" class="tab-button active">Por Hacer</button>
+    <button data-tab="mi-dia" class="tab-button">Mi Día</button>
+    <button data-tab="hechas" class="tab-button">Hechas</button>
+  </div>
 
   <!-- Contenedor Principal de Tareas -->
   <main class="contenedor">
@@ -92,7 +99,6 @@
       <form id="taskForm" autocomplete="off">
         <input type="hidden" id="taskId" />
 
-        <!-- Agrupamos cada campo en .form-group para añadir separación en el CSS -->
         <div class="form-group">
           <label for="titulo">Título:</label>
           <input type="text" id="titulo" required autocomplete="off" />
@@ -148,21 +154,18 @@
         <div class="left-container">
           <!-- Selector de modo (semana / mes) -->
           <div class="calendar-mode-toggle segmented-control">
-            <button id="btnWeek" class="active">Semana</button>
-            <button id="btnMonth">Mes</button>
+            <button id="btnWeek" class="week-button">Semana</button>
+            <button id="btnMonth" class="active">Mes</button>
           </div>
 
-          <!-- Flechas para Mes (arriba/abajo) y Semana (izq/der) -->
+          <!-- Flechas para Mes y Semana -->
           <div class="calendar-nav">
-            <!-- Flechas Mes -->
             <button id="btnPrevMonth" class="calendar-nav-button month-only" title="Mes anterior">
               <i class="fa-solid fa-chevron-up"></i>
             </button>
             <button id="btnNextMonth" class="calendar-nav-button month-only" title="Mes siguiente">
               <i class="fa-solid fa-chevron-down"></i>
             </button>
-
-            <!-- Flechas Semana -->
             <button id="btnPrevWeek" class="calendar-nav-button week-only" title="Semana anterior">
               <i class="fa-solid fa-chevron-left"></i>
             </button>
@@ -188,7 +191,6 @@
       <small id="eventSubTitle" class="event-subtitle"></small>
 
       <form id="eventForm" autocomplete="off">
-        <!-- Identificadores ocultos -->
         <input type="hidden" id="eventId" />
         <input type="hidden" id="eventDate" />
 
@@ -202,7 +204,7 @@
           <textarea id="eventDesc" autocomplete="off"></textarea>
         </div>
 
-        <!-- Sección con toggle custom para marcar como calificado -->
+        <!-- Toggle para marcar como Calificado -->
         <div class="form-group toggle-container">
           <label class="switch">
             <input type="checkbox" id="gradedEvent">
@@ -220,12 +222,7 @@
           <button type="submit" class="btn-save">
             <i class="fa-solid fa-floppy-disk"></i> Guardar
           </button>
-          <button
-            type="button"
-            class="btn-danger"
-            id="btnEliminarEvento"
-            style="display: none;"
-          >
+          <button type="button" class="btn-danger" id="btnEliminarEvento" style="display: none;">
             <i class="fa-solid fa-trash"></i> Eliminar
           </button>
         </div>
@@ -242,5 +239,46 @@
   <script src="app.js"></script>
   <!-- Lógica del Calendario con Vista Semanal y Mensual -->
   <script src="calendar.js"></script>
+
+  <!-- Script para manejar las pestañas móviles -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileTabs = document.querySelector('.mobile-tabs');
+      if (mobileTabs) {
+        const tabButtons = mobileTabs.querySelectorAll('.tab-button');
+        const columns = document.querySelectorAll('main.contenedor .columna');
+
+        function updateMobileTabs() {
+          const activeTab = mobileTabs.querySelector('.tab-button.active').getAttribute('data-tab');
+          columns.forEach(col => {
+            col.style.display = (col.getAttribute('data-columna') === activeTab) ? 'block' : 'none';
+          });
+        }
+
+        tabButtons.forEach(btn => {
+          btn.addEventListener('click', function() {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateMobileTabs();
+          });
+        });
+
+        function handleResize() {
+          if (window.innerWidth <= 768) {
+            mobileTabs.style.display = 'flex';
+            updateMobileTabs();
+          } else {
+            mobileTabs.style.display = 'none';
+            columns.forEach(col => {
+              col.style.display = '';
+            });
+          }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+      }
+    });
+  </script>
 </body>
 </html>

@@ -261,6 +261,16 @@ header h1 {
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
+
+/* Evitar solapamiento: la fecha y botones pueden saltar a otra línea */
+.header-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .botones {
   display: flex;
   gap: 0.5rem;
@@ -372,11 +382,11 @@ textarea {
   margin-bottom: 1rem;
 }
 .form-group {
-  margin-bottom: 1rem; /* Espacio entre cada bloque de label + input/textarea */
+  margin-bottom: 1rem;
 }
 .form-group label {
-  display: block;       /* Poner el label en su propia línea */
-  margin-bottom: 0.4rem; /* Separación entre el label y su campo */
+  display: block;
+  margin-bottom: 0.4rem;
 }
 
 /* Custom Toggle Switch */
@@ -441,7 +451,6 @@ input:checked + .slider:before {
   gap: 0.3rem;
   margin-top: 1rem;
 }
-/* Se quita la posición absoluta y se deja en flujo normal */
 .due-date {
   padding: 0.2rem 0.4rem;
   border: 2px solid transparent;
@@ -694,6 +703,8 @@ input:checked + .slider:before {
   transition: width 0.3s ease;
   border-radius: var(--border-radius);
 }
+
+/* ESTILOS PARA DISPOSITIVOS PEQUEÑOS */
 @media (max-width: 768px), (orientation: portrait) {
   .contenedor {
     flex-direction: column;
@@ -705,6 +716,7 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
 @media (min-width: 1200px) and (orientation: landscape) {
   .contenedor {
     flex-direction: row;
@@ -716,6 +728,7 @@ input:checked + .slider:before {
     max-width: 30%;
   }
 }
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .contenedor {
     flex-wrap: wrap;
@@ -727,10 +740,11 @@ input:checked + .slider:before {
     margin-bottom: 1rem;
   }
 }
+
+/* UI para pasos de la tarea */
 .step-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background-color: var(--bg-card);
   padding: 0.5rem;
   margin-bottom: 0.5rem;
@@ -758,15 +772,16 @@ input:checked + .slider:before {
   border-radius: var(--border-radius);
   cursor: pointer;
   font-size: 0.9rem;
+  margin-left: auto;
 }
 #btnAddStep {
   background-color: var(--accent-color);
   border: none;
   padding: 0.5rem 1rem;
+  font-weight: bold;
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-weight: bold;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
@@ -774,22 +789,51 @@ input:checked + .slider:before {
 #btnAddStep:hover {
   background-color: var(--accent-hover);
 }
+
 /* Espacio adicional entre la fecha y la sección de pasos */
 .steps-section {
   margin-top: 1.5rem;
 }
 
-/* Contenedor para agrupar fecha + botones a la derecha */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Ocultar Título y Buscador en móvil */
+@media (max-width: 768px) {
+  header h1,
+  .search-container {
+    display: none !important;
+  }
+  .calendar-modal-content {
+    margin: 2rem auto;
+    width: 90%;
+    height: auto;
+  }
 }
 
-/* Estilos de foco para accesibilidad */
-button:focus,
-input:focus,
-textarea:focus {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
+/* =======================
+   Mejorar .mobile-tabs
+   ======================= */
+.mobile-tabs {
+  display: none; /* se activa con JS en pantallas pequeñas */
+  justify-content: space-evenly;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  margin: 1rem;
+  padding: 0.5rem;
+}
+.mobile-tabs .tab-button {
+  flex: 1;
+  background-color: var(--bg-card);
+  border: none;
+  border-radius: var(--border-radius);
+  margin: 0 0.2rem;
+  padding: 0.6rem;
+  color: var(--text-primary);
+  font-weight: bold;
+  transition: background-color var(--transition-speed);
+}
+.mobile-tabs .tab-button:hover {
+  background-color: var(--bg-primary);
+}
+.mobile-tabs .tab-button.active {
+  background-color: var(--accent-color);
+  color: #fff;
 }

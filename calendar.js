@@ -32,7 +32,7 @@ const CalendarModule = (function() {
 
   // Listener para cerrar el calendario
   btnCloseCalendar.addEventListener('click', () => {
-    calendarModalEl.classList.remove('active'); // Se remueve la clase para ocultar el calendario
+    calendarModalEl.classList.remove('active'); // Oculta el calendario
   });
 
   // Funciones auxiliares para el formateo de fechas
@@ -210,22 +210,30 @@ const CalendarModule = (function() {
     }
   }
 
+  // Función modificada para crear eventos con tamaño reducido
   function crearEventElement(ev) {
     const eventEl = document.createElement('div');
     eventEl.classList.add('calendar-event');
+
+    // Si el evento está marcado para calificar y aún no tiene nota, se aplica clase especial
     if (ev.graded && (!ev.grade || ev.grade === "")) {
       const eventDate = new Date(ev.date + "T00:00:00");
-      const today = new Date(); today.setHours(0,0,0,0);
+      const today = new Date();
+      today.setHours(0,0,0,0);
       if (eventDate > today) {
         eventEl.classList.add('pending-grade');
       } else {
         eventEl.classList.add('ungraded');
       }
     }
-    eventEl.textContent = ev.title;
-    eventEl.setAttribute("role", "button");
-    eventEl.setAttribute("aria-label", "Editar evento: " + ev.title);
     
+    // Creamos un span para el título del evento con clase para tamaño reducido
+    const titleSpan = document.createElement('span');
+    titleSpan.classList.add('small-event-title');
+    titleSpan.textContent = ev.title;
+    eventEl.appendChild(titleSpan);
+    
+    // Si existe nota de evaluación, se agrega
     if (ev.grade) {
       const gradeEl = document.createElement('span');
       gradeEl.classList.add('event-grade');
@@ -233,6 +241,8 @@ const CalendarModule = (function() {
       eventEl.appendChild(gradeEl);
     }
     
+    eventEl.setAttribute("role", "button");
+    eventEl.setAttribute("aria-label", "Editar evento: " + ev.title);
     eventEl.setAttribute('draggable', 'true');
     eventEl.dataset.id = ev.id;
     eventEl.addEventListener('dragstart', eventDragStart);
@@ -261,7 +271,7 @@ const CalendarModule = (function() {
 
   // Modal de eventos
   function abrirEventModal(ev, dateStr) {
-    eventModalEl.classList.add('active'); // Se muestra el modal con transición
+    eventModalEl.classList.add('active');
     if (ev) {
       eventModalTitle.textContent = 'Editar Evento';
       eventSubTitle.textContent = `Fecha: ${ev.date}`;
@@ -287,7 +297,7 @@ const CalendarModule = (function() {
     }
   }
   eventCloseBtn.addEventListener('click', () => {
-    eventModalEl.classList.remove('active'); // Se oculta el modal de eventos
+    eventModalEl.classList.remove('active');
   });
 
   eventForm.addEventListener('submit', e => {
@@ -314,9 +324,7 @@ const CalendarModule = (function() {
         grade: isGraded ? gradeValue : null
       };
       events.push(newEv);
-      // Si el título del evento contiene "examen" en cualquier parte, se genera la tarea
       if (/examen/i.test(title)) {
-        // Elimina todas las apariciones de "examen" (sin distinguir mayúsculas) y recorta espacios
         const examTitle = title.replace(/examen/ig, '').trim();
         const newTaskTitle = 'Estudiar ' + examTitle;
         let fechaTarea = new Date(date + 'T00:00:00');
@@ -374,7 +382,6 @@ const CalendarModule = (function() {
   btnPrevMonth.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
   btnNextMonth.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
 
-  // Listener para cerrar modales con Escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (calendarModalEl.classList.contains('active')) {
@@ -386,7 +393,6 @@ const CalendarModule = (function() {
     }
   });
 
-  // Inicialización
   function init() {
     cargarEventos();
     renderCalendar();

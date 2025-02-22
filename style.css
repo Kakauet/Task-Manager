@@ -29,57 +29,6 @@
   --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
-/* NUEVOS TEMAS */
-/* Tema Azul */
-[data-theme="blue"] {
-  --bg-primary: #e0f7fa;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #006064;
-  --text-secondary: #4dd0e1;
-  --accent-color: #00acc1;
-  --accent-hover: #00838f;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Tema Verde */
-[data-theme="green"] {
-  --bg-primary: #e8f5e9;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #1b5e20;
-  --text-secondary: #81c784;
-  --accent-color: #43a047;
-  --accent-hover: #2e7d32;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Tema Rojo */
-[data-theme="red"] {
-  --bg-primary: #ffebee;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #b71c1c;
-  --text-secondary: #ef9a9a;
-  --accent-color: #e53935;
-  --accent-hover: #c62828;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Tema Morado */
-[data-theme="purple"] {
-  --bg-primary: #f3e5f5;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #4a148c;
-  --text-secondary: #ce93d8;
-  --accent-color: #8e24aa;
-  --accent-hover: #6a1b9a;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Resto de estilos existentes */
-
 * {
   user-select: none;
 }

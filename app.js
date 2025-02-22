@@ -1,6 +1,6 @@
 /* 
   app.js - Versión refactorizada con Undo/Redo, reordenación de columnas, nuevos temas, 
-  mejora en arrastre táctil con clon flotante y reincorporación de la funcionalidad 
+  mejora en arrastre táctil con clon flotante para tareas y pasos, y reincorporación de la funcionalidad 
   de mover tareas a través de los botones de panel en versión móvil.
 */
 
@@ -35,9 +35,11 @@ const TaskModule = (function() {
   const btnToggleCalendar = document.getElementById('btnToggleCalendar');
   const calendarModal = document.getElementById('calendarModal');
 
-  // Para arrastre táctil en móvil
+  // Para arrastre táctil en móvil para tareas
   let lastTabHighlighted = null;
   let dropPlaceholder = null;
+  // Nueva variable para el placeholder de pasos en móvil
+  let stepDropPlaceholder = null;
 
   // Funciones de estado para Undo/Redo
   function saveState() {
@@ -194,6 +196,13 @@ const TaskModule = (function() {
       stepDiv.appendChild(stepInput);
       stepDiv.appendChild(btnDeleteStep);
       stepsContainer.appendChild(stepDiv);
+
+      // Agregar eventos táctiles para móviles en pasos
+      if ('ontouchstart' in window) {
+        stepDiv.addEventListener('touchstart', touchStartStep, { passive: false });
+        stepDiv.addEventListener('touchmove', touchMoveStep, { passive: false });
+        stepDiv.addEventListener('touchend', touchEndStep, { passive: false });
+      }
     });
   }
 
@@ -230,7 +239,7 @@ const TaskModule = (function() {
     }
   });
 
-  // Drag & drop para los pasos en el modal
+  // Drag & drop para los pasos en el modal (versión escritorio)
   stepsContainer.addEventListener('dragover', (e) => {
     e.preventDefault();
     const draggingStep = document.querySelector('.step-item.dragging');
@@ -279,6 +288,93 @@ const TaskModule = (function() {
       tempSteps.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
       renderStepsInModal({ pasos: tempSteps });
     }
+  }
+
+  // Funciones de arrastre táctil para pasos en móvil
+  function touchStartStep(e) {
+    const el = e.currentTarget;
+    el.originalRect = el.getBoundingClientRect();
+    el.touchStartX = e.touches[0].clientX;
+    el.touchStartY = e.touches[0].clientY;
+    el.longPressTimeout = setTimeout(() => {
+      const clone = el.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.left = el.originalRect.left + 'px';
+      clone.style.top = el.originalRect.top + 'px';
+      clone.style.width = el.originalRect.width + 'px';
+      clone.style.zIndex = 1000;
+      clone.style.pointerEvents = 'none';
+      document.body.appendChild(clone);
+      el.floatingClone = clone;
+      el.isDragging = true;
+      el.classList.add('dragging');
+      // Ocultar el elemento original durante el arrastre
+      el.classList.add('hidden-during-drag');
+    }, 300);
+  }
+
+  function touchMoveStep(e) {
+    e.preventDefault(); // Evitar scroll
+    const el = e.currentTarget;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - el.touchStartX;
+    const deltaY = touch.clientY - el.touchStartY;
+    if (el.isDragging && el.floatingClone) {
+      const newLeft = el.originalRect.left + deltaX;
+      const newTop = el.originalRect.top + deltaY;
+      el.floatingClone.style.left = newLeft + 'px';
+      el.floatingClone.style.top = newTop + 'px';
+
+      // Usar el contenedor de pasos para determinar la posición de inserción
+      const dropContainer = stepsContainer;
+      const afterElement = getDragAfterStep(dropContainer, touch.clientY);
+      if (!stepDropPlaceholder) {
+        stepDropPlaceholder = document.createElement('div');
+        stepDropPlaceholder.className = 'drop-placeholder';
+      }
+      stepDropPlaceholder.style.height = el.originalRect.height + 'px';
+      if (afterElement) {
+        dropContainer.insertBefore(stepDropPlaceholder, afterElement);
+      } else {
+        dropContainer.appendChild(stepDropPlaceholder);
+      }
+    } else {
+      if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 10) {
+        clearTimeout(el.longPressTimeout);
+      }
+    }
+  }
+
+  function touchEndStep(e) {
+    const el = e.currentTarget;
+    clearTimeout(el.longPressTimeout);
+    if (!el.isDragging) return;
+    const touch = e.changedTouches[0];
+    const dropContainer = stepsContainer;
+    const stepElements = Array.from(dropContainer.querySelectorAll('.step-item:not(.dragging)'));
+    let newIndex = stepElements.findIndex(stepEl => {
+      const rect = stepEl.getBoundingClientRect();
+      return touch.clientY < rect.top + rect.height / 2;
+    });
+    if (newIndex === -1) newIndex = stepElements.length;
+
+    // Remover el placeholder de previsualización
+    if (stepDropPlaceholder && stepDropPlaceholder.parentNode) {
+      stepDropPlaceholder.parentNode.removeChild(stepDropPlaceholder);
+      stepDropPlaceholder = null;
+    }
+    // Remover el clon flotante
+    if (el.floatingClone) {
+      document.body.removeChild(el.floatingClone);
+      el.floatingClone = null;
+    }
+    // Mostrar el elemento original y resetear estado
+    el.classList.remove('hidden-during-drag');
+    el.isDragging = false;
+    el.classList.remove('dragging');
+
+    // Actualizar el orden de los pasos según el DOM
+    updateStepsOrder();
   }
 
   btnAddStep.addEventListener('click', () => {
@@ -467,7 +563,7 @@ const TaskModule = (function() {
           tareaDiv.addEventListener('dragstart', dragStart);
           tareaDiv.addEventListener('dragend', dragEnd);
 
-          // Eventos táctiles para arrastrar en móvil
+          // Eventos táctiles para arrastrar en móvil (tareas)
           if ('ontouchstart' in window) {
             tareaDiv.addEventListener('touchstart', touchStartTask, {passive: false});
             tareaDiv.addEventListener('touchmove', touchMoveTask, {passive: false});
@@ -542,7 +638,7 @@ const TaskModule = (function() {
   function dragEnd(e) { e.target.classList.remove('dragging'); }
 
   // ============================================
-  // INICIO: ARRASTRE TÁCTIL EN MÓVIL
+  // INICIO: ARRASTRE TÁCTIL EN MÓVIL PARA TAREAS
   // ============================================
   function touchStartTask(e) {
     const el = e.currentTarget;
@@ -561,8 +657,7 @@ const TaskModule = (function() {
       el.floatingClone = clone;
       el.isDragging = true;
       el.classList.add('dragging');
-
-      /* En vez de ocultar con visibility, aplicamos una clase que hace display: none */
+      // Ocultar el elemento original durante el arrastre
       el.classList.add('hidden-during-drag');
     }, 300);
   }
@@ -583,7 +678,7 @@ const TaskModule = (function() {
       // Resaltar y auto-cambiar de panel si estamos sobre una pestaña
       highlightTabButton(touch.clientX, touch.clientY);
 
-      // Previsualizar el lugar de inserción con altura dinámica
+      // Previsualizar el lugar de inserción con placeholder dinámico
       const dropContainer = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.contenedor-tareas');
       if (dropContainer) {
         const afterElement = getDragAfterElement(dropContainer, touch.clientY);
@@ -591,11 +686,7 @@ const TaskModule = (function() {
           dropPlaceholder = document.createElement('div');
           dropPlaceholder.className = 'drop-placeholder';
         }
-        // Ajusta la altura del placeholder según la altura original del elemento
         dropPlaceholder.style.height = el.originalRect.height + 'px';
-        if (dropPlaceholder.parentNode && dropPlaceholder.parentNode !== dropContainer) {
-          dropPlaceholder.parentNode.removeChild(dropPlaceholder);
-        }
         if (afterElement) {
           dropContainer.insertBefore(dropPlaceholder, afterElement);
         } else {
@@ -607,7 +698,6 @@ const TaskModule = (function() {
         }
       }
     } else {
-      // Si se arrastra más de cierto umbral, se cancela el longPressTimeout
       if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 10) {
         clearTimeout(el.longPressTimeout);
       }
@@ -625,7 +715,6 @@ const TaskModule = (function() {
     const container = dropTarget ? dropTarget.closest('.contenedor-tareas') : null;
     const tareaId = el.dataset.id;
 
-    // Si se ha resaltado una pestaña, ya se habrá cambiado la vista
     if (lastTabHighlighted) {
       const newEstado = lastTabHighlighted.dataset.tab;
       if (newEstado) {
@@ -647,28 +736,25 @@ const TaskModule = (function() {
       renderTareas();
     }
 
-    // Remover el placeholder de previsualización
     if (dropPlaceholder && dropPlaceholder.parentNode) {
       dropPlaceholder.parentNode.removeChild(dropPlaceholder);
       dropPlaceholder = null;
     }
 
-    // Remover el clon flotante
     if (el.floatingClone) {
       document.body.removeChild(el.floatingClone);
       el.floatingClone = null;
     }
 
-    // Volver a mostrar la tarea en su nueva posición
     el.classList.remove('hidden-during-drag');
     el.isDragging = false;
     el.classList.remove('dragging');
   }
   // ============================================
-  // FIN: ARRASTRE TÁCTIL EN MÓVIL
+  // FIN: ARRASTRE TÁCTIL EN MÓVIL PARA TAREAS
   // ============================================
 
-  // Funciones de apoyo
+  // Funciones de apoyo para navegación en móvil
   function removeTabHighlight() {
     if (lastTabHighlighted) {
       lastTabHighlighted.classList.remove('dragover');
@@ -681,7 +767,6 @@ const TaskModule = (function() {
     if (potentialTab) {
       potentialTab.classList.add('dragover');
       lastTabHighlighted = potentialTab;
-      // Auto-switch de panel en móvil
       const mobileTabs = document.querySelector('.mobile-tabs');
       if (mobileTabs) {
         mobileTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -697,13 +782,11 @@ const TaskModule = (function() {
   // Inicializar Flatpickr
   function inicializarFlatpickr() {
     picker = flatpickr("#vencimiento", {
-      /* Configuración para que sea un input de texto limpio */
       dateFormat: "d/m/Y",
       allowInput: true,
       clickOpens: true,
       locale: "es",
       defaultDate: null,
-      // Puedes agregar un placeholder directamente en el HTML si lo prefieres.
     });
   }
 

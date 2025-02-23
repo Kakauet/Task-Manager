@@ -162,6 +162,33 @@ const TaskModule = (function() {
   }
   closeModalBtn.addEventListener('click', cerrarModal);
 
+  // Función para actualizar o crear la barra de progreso en el modal
+  function updateModalProgressBar(tarea) {
+    const pasos = tarea.pasos || [];
+    const total = pasos.length;
+    let completados = 0;
+    pasos.forEach(step => {
+      if (step.completado) completados++;
+    });
+    const percentage = total > 0 ? Math.round((completados / total) * 100) : 0;
+    // Buscar la barra de progreso en el modal; si no existe, se crea y se inserta antes del contenedor de pasos
+    let progressContainer = document.getElementById('modalProgressContainer');
+    if (!progressContainer) {
+      progressContainer = document.createElement('div');
+      progressContainer.id = 'modalProgressContainer';
+      progressContainer.classList.add('progress-container');
+      const progressBar = document.createElement('div');
+      progressBar.classList.add('progress-bar');
+      progressBar.style.width = '0%';
+      progressBar.textContent = '0%';
+      progressContainer.appendChild(progressBar);
+      stepsContainer.parentNode.insertBefore(progressContainer, stepsContainer);
+    }
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    progressBar.style.width = percentage + '%';
+    progressBar.textContent = percentage + '%';
+  }
+
   // Gestión de pasos
   function renderStepsInModal(tarea) {
     stepsContainer.innerHTML = '';
@@ -204,6 +231,8 @@ const TaskModule = (function() {
         stepDiv.addEventListener('touchend', touchEndStep, { passive: false });
       }
     });
+    // Actualizar o crear la barra de progreso en el modal
+    updateModalProgressBar({ pasos: pasos });
   }
 
   stepsContainer.addEventListener('click', (e) => {

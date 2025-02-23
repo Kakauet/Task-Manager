@@ -166,12 +166,19 @@ const TaskModule = (function() {
   function updateModalProgressBar(tarea) {
     const pasos = tarea.pasos || [];
     const total = pasos.length;
+    if (total === 0) {
+      // Si no hay pasos, eliminar la barra de progreso si existe y salir
+      const existingProgressContainer = document.getElementById('modalProgressContainer');
+      if (existingProgressContainer) {
+        existingProgressContainer.remove();
+      }
+      return;
+    }
     let completados = 0;
     pasos.forEach(step => {
       if (step.completado) completados++;
     });
-    const percentage = total > 0 ? Math.round((completados / total) * 100) : 0;
-    // Buscar la barra de progreso en el modal; si no existe, se crea y se inserta antes del contenedor de pasos
+    const percentage = Math.round((completados / total) * 100);
     let progressContainer = document.getElementById('modalProgressContainer');
     if (!progressContainer) {
       progressContainer = document.createElement('div');
@@ -231,7 +238,7 @@ const TaskModule = (function() {
         stepDiv.addEventListener('touchend', touchEndStep, { passive: false });
       }
     });
-    // Actualizar o crear la barra de progreso en el modal
+    // Actualizar o crear la barra de progreso en el modal (si hay pasos)
     updateModalProgressBar({ pasos: pasos });
   }
 
@@ -495,6 +502,9 @@ const TaskModule = (function() {
         if (estado === COLUMN_STATES.TODO) {
           placeholderText = 'Crea una tarea';
           placeholderIcon = '<i class="fa-solid fa-plus"></i>';
+          placeholder.addEventListener('click', () => {
+            abrirModal();
+          });
         } else if (estado === COLUMN_STATES.MY_DAY) {
           placeholderText = 'Añade una tarea a tu día';
           placeholderIcon = '<i class="fa-solid fa-sun"></i>';

@@ -6,7 +6,7 @@
 
 const TaskModule = (function() {
   const COLUMN_STATES = { TODO: 'por-hacer', MY_DAY: 'mi-dia', DONE: 'hechas' };
-  const AVAILABLE_THEMES = ['dark', 'light', 'blue', 'green', 'red', 'purple'];
+  const AVAILABLE_THEMES = ['dark', 'light'];
   let tareas = [];
   let tempSteps = [];
   let picker = null;

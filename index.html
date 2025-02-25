@@ -6,28 +6,15 @@
   <title>Tasks</title>
 
   <!-- Fuentes y Estilos -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <!-- Flatpickr CSS -->
   <!-- Se comenta el tema material_blue para evitar estilos no deseados -->
   <!--
-  <link
-    id="flatpickrTheme"
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
-  />
+  <link id="flatpickrTheme" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css" />
   -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 
   <!-- Hoja de Estilos Principal -->
   <link rel="stylesheet" href="style.css" />
@@ -41,12 +28,7 @@
     <!-- Buscador de tareas -->
     <div class="search-container">
       <i class="fa-solid fa-magnifying-glass icon-theme"></i>
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Buscar tarea..."
-        autocomplete="off"
-      />
+      <input type="text" id="searchInput" placeholder="Buscar tarea..." autocomplete="off" />
     </div>
 
     <div class="header-buttons">
@@ -64,6 +46,17 @@
         <i class="fa-solid fa-calendar-days icon-theme"></i>
         <span>Calendario</span>
       </button>
+      <!-- Botón Archivo (Exportar/Importar) -->
+      <div class="dropdown">
+        <button class="header-button" id="btnArchivo">
+          <i class="fa-solid fa-file icon-theme"></i>
+          <span>Archivo</span>
+        </button>
+        <div class="dropdown-content" id="archivoDropdown">
+          <a href="#" id="exportar">Exportar</a>
+          <a href="#" id="importar">Importar</a>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -116,12 +109,7 @@
           <label class="calendar-label" for="vencimiento">
             <i class="fa-regular fa-calendar icon-theme"></i> Fecha de Vencimiento:
           </label>
-          <input
-            type="text"
-            id="vencimiento"
-            placeholder="Selecciona fecha..."
-            autocomplete="off"
-          />
+          <input type="text" id="vencimiento" placeholder="Selecciona fecha..." autocomplete="off" />
         </div>
 
         <div class="steps-section">
@@ -242,7 +230,9 @@
   <script src="app.js"></script>
   <!-- Lógica del Calendario con Vista Semanal y Mensual -->
   <script src="calendar.js"></script>
-
+  <!-- Script para manejo de exportar/importar datos -->
+  <script src="exportImport.js"></script>
+  
   <!-- Script para manejar las pestañas móviles -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {

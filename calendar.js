@@ -1,12 +1,16 @@
-/* calendar.js - Versión refactorizada y mejorada */
+/* calendar.js - Módulo de Calendario Refactorizado con funcionalidad de arrastre en móvil */
 
 const CalendarModule = (function() {
-  // Estado interno
+  // =======================================================================
+  // Estado Interno
+  // =======================================================================
   let calendarMode = 'month'; // 'week' o 'month'
-  let currentDate = new Date();
-  let events = []; // { id, title, desc, date, graded, grade }
+  let currentDate = new Date(); // Fecha actual para navegar el calendario
+  let events = []; // Eventos: { id, title, desc, date, graded, grade }
 
-  // Referencias DOM
+  // =======================================================================
+  // Referencias a Elementos del DOM
+  // =======================================================================
   const calendarModalEl = document.getElementById('calendarModal');
   const btnCloseCalendar = document.getElementById('btnCloseCalendar');
   const calendarTitleEl = document.getElementById('calendarTitle');
@@ -18,7 +22,7 @@ const CalendarModule = (function() {
   const btnWeek = document.getElementById('btnWeek');
   const btnMonth = document.getElementById('btnMonth');
 
-  // Modal de Eventos
+  // Elementos del modal para gestionar eventos
   const eventModalEl = document.getElementById('eventModal');
   const eventCloseBtn = document.getElementById('eventCloseBtn');
   const eventModalTitle = document.getElementById('eventModalTitle');
@@ -30,12 +34,17 @@ const CalendarModule = (function() {
   const inputEventDesc = document.getElementById('eventDesc');
   const btnEliminarEvento = document.getElementById('btnEliminarEvento');
 
-  // Listener para cerrar el calendario
+  // =======================================================================
+  // Eventos de Interfaz
+  // =======================================================================
+  // Cerrar modal del calendario
   btnCloseCalendar.addEventListener('click', () => {
     calendarModalEl.classList.remove('active'); // Oculta el calendario
   });
 
-  // Funciones auxiliares para el formateo de fechas
+  // =======================================================================
+  // Funciones de Utilidad para Fechas y Generación de ID
+  // =======================================================================
   function toISODate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -67,7 +76,9 @@ const CalendarModule = (function() {
     return '_' + Math.random().toString(36).substr(2, 9);
   }
 
-  // Carga y guarda de eventos
+  // =======================================================================
+  // Gestión del Almacenamiento de Eventos (LocalStorage)
+  // =======================================================================
   function cargarEventos() {
     const stored = localStorage.getItem('events');
     if (stored) {
@@ -78,7 +89,10 @@ const CalendarModule = (function() {
     localStorage.setItem('events', JSON.stringify(events));
   }
 
-  // Render del calendario
+  // =======================================================================
+  // Renderización del Calendario
+  // =======================================================================
+  
   function renderCalendar() {
     calendarListEl.innerHTML = '';
     calendarListEl.classList.remove('calendar-week-grid', 'calendar-month-grid');
@@ -92,6 +106,7 @@ const CalendarModule = (function() {
     }
   }
 
+  // ----- Vista Semanal -----
   function renderWeekView() {
     const dateCopy = new Date(currentDate);
     const dayOfWeek = dateCopy.getDay();
@@ -107,8 +122,12 @@ const CalendarModule = (function() {
       const day = new Date(dateCopy);
       const listItem = document.createElement('li');
       listItem.classList.add('calendar-day', 'week-cell');
+      // Asignamos el atributo data-date para identificar la celda
+      const dayStr = toISO(day);
+      listItem.dataset.date = dayStr;
       if (esHoy(day)) listItem.classList.add('today');
 
+      // Información básica del día (nombre y número)
       const dayInfo = document.createElement('div');
       dayInfo.classList.add('day-info');
       const dayName = document.createElement('div');
@@ -121,20 +140,22 @@ const CalendarModule = (function() {
       dayInfo.appendChild(dayNumber);
       listItem.appendChild(dayInfo);
 
+      // Contenedor para eventos del día
       const eventsContainer = document.createElement('div');
       eventsContainer.classList.add('events-container');
-      const dayStr = toISO(day);
       events
         .filter(ev => ev.date === dayStr)
         .forEach(ev => eventsContainer.appendChild(crearEventElement(ev)));
       listItem.appendChild(eventsContainer);
 
+      // Evento para abrir modal al hacer clic en el día (si no se hace clic en un evento)
       listItem.addEventListener('click', e => {
         if (!e.target.closest('.calendar-event')) {
           abrirEventModal(null, dayStr);
         }
       });
 
+      // Permite arrastrar y soltar eventos (drag and drop)
       listItem.addEventListener('dragover', e => e.preventDefault());
       listItem.addEventListener('drop', e => {
         e.preventDefault();
@@ -148,6 +169,7 @@ const CalendarModule = (function() {
     }
   }
 
+  // ----- Vista Mensual -----
   function renderMonthView() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -157,6 +179,7 @@ const CalendarModule = (function() {
     ];
     calendarTitleEl.textContent = `${monthNames[month]} ${year}`;
 
+    // Cabecera de la semana (abreviaturas)
     ["L","M","X","J","V","S","D"].forEach(d => {
       const headerItem = document.createElement('li');
       headerItem.classList.add('month-header');
@@ -164,6 +187,7 @@ const CalendarModule = (function() {
       calendarListEl.appendChild(headerItem);
     });
 
+    // Determina el primer día y celdas vacías previas
     const firstDay = new Date(year, month, 1);
     let startIndex = firstDay.getDay();
     if (startIndex === 0) startIndex = 7;
@@ -176,29 +200,35 @@ const CalendarModule = (function() {
       calendarListEl.appendChild(emptyCell);
     }
 
+    // Relleno de celdas con cada día del mes
     for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
       const cell = document.createElement('li');
       cell.classList.add('calendar-day', 'month-cell');
       const currentDay = new Date(year, month, dayNum);
+      // Asignamos el atributo data-date
+      const dayStr = toISO(currentDay);
+      cell.dataset.date = dayStr;
       if (esHoy(currentDay)) cell.classList.add('today');
       const dayNumber = document.createElement('div');
       dayNumber.classList.add('day-number');
       dayNumber.textContent = dayNum;
       cell.appendChild(dayNumber);
 
+      // Contenedor para eventos del día
       const eventsContainer = document.createElement('div');
       eventsContainer.classList.add('events-container');
-      const dayStr = toISO(currentDay);
       events
         .filter(ev => ev.date === dayStr)
         .forEach(ev => eventsContainer.appendChild(crearEventElement(ev)));
       cell.appendChild(eventsContainer);
 
+      // Abre modal de evento al hacer clic en la celda (si no se hace clic en un evento)
       cell.addEventListener('click', e => {
         if (!e.target.closest('.calendar-event')) {
           abrirEventModal(null, dayStr);
         }
       });
+      // Habilita arrastrar y soltar sobre la celda
       cell.addEventListener('dragover', e => e.preventDefault());
       cell.addEventListener('drop', e => {
         e.preventDefault();
@@ -210,12 +240,14 @@ const CalendarModule = (function() {
     }
   }
 
-  // Función modificada para crear eventos con tamaño reducido
+  // =======================================================================
+  // Creación y Configuración de Elementos de Evento
+  // =======================================================================
   function crearEventElement(ev) {
     const eventEl = document.createElement('div');
     eventEl.classList.add('calendar-event');
 
-    // Si el evento está marcado para calificar y aún no tiene nota, se aplica clase especial
+    // Estilos según calificación
     if (ev.graded && (!ev.grade || ev.grade === "")) {
       const eventDate = new Date(ev.date + "T00:00:00");
       const today = new Date();
@@ -227,13 +259,13 @@ const CalendarModule = (function() {
       }
     }
     
-    // Creamos un span para el título del evento con clase para tamaño reducido
+    // Título reducido
     const titleSpan = document.createElement('span');
     titleSpan.classList.add('small-event-title');
     titleSpan.textContent = ev.title;
     eventEl.appendChild(titleSpan);
     
-    // Si existe nota de evaluación, se agrega
+    // Muestra la nota si existe
     if (ev.grade) {
       const gradeEl = document.createElement('span');
       gradeEl.classList.add('event-grade');
@@ -241,6 +273,7 @@ const CalendarModule = (function() {
       eventEl.appendChild(gradeEl);
     }
     
+    // Configuración de accesibilidad y propiedades de arrastre
     eventEl.setAttribute("role", "button");
     eventEl.setAttribute("aria-label", "Editar evento: " + ev.title);
     eventEl.setAttribute('draggable', 'true');
@@ -251,9 +284,20 @@ const CalendarModule = (function() {
       e.stopPropagation();
       abrirEventModal(ev, ev.date);
     });
+    
+    // Solo en móvil: añade controladores táctiles para arrastre
+    if ('ontouchstart' in window) {
+      eventEl.addEventListener('touchstart', touchStartEvent, { passive: false });
+      eventEl.addEventListener('touchmove', touchMoveEvent, { passive: false });
+      eventEl.addEventListener('touchend', touchEndEvent, { passive: false });
+    }
+    
     return eventEl;
   }
 
+  // =======================================================================
+  // Funciones de Arrastre (Drag & Drop)
+  // =======================================================================
   function eventDragStart(e) {
     e.target.classList.add('dragging');
   }
@@ -269,10 +313,77 @@ const CalendarModule = (function() {
     }
   }
 
-  // Modal de eventos
+  // =======================================================================
+  // Funciones Táctiles para Móviles (solo activas en modo móvil)
+  // =======================================================================
+  function touchStartEvent(e) {
+    const el = e.currentTarget;
+    el.originalRect = el.getBoundingClientRect();
+    el.touchStartX = e.touches[0].clientX;
+    el.touchStartY = e.touches[0].clientY;
+    el.longPressTimeout = setTimeout(() => {
+      const clone = el.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.left = el.originalRect.left + 'px';
+      clone.style.top = el.originalRect.top + 'px';
+      clone.style.width = el.originalRect.width + 'px';
+      clone.style.zIndex = 1000;
+      clone.style.pointerEvents = 'none';
+      document.body.appendChild(clone);
+      el.floatingClone = clone;
+      el.isDragging = true;
+      el.classList.add('dragging');
+      el.classList.add('hidden-during-drag');
+    }, 300);
+  }
+
+  function touchMoveEvent(e) {
+    e.preventDefault(); // Evita el scroll durante el arrastre
+    const el = e.currentTarget;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - el.touchStartX;
+    const deltaY = touch.clientY - el.touchStartY;
+    if (el.isDragging && el.floatingClone) {
+      const newLeft = el.originalRect.left + deltaX;
+      const newTop = el.originalRect.top + deltaY;
+      el.floatingClone.style.left = newLeft + 'px';
+      el.floatingClone.style.top = newTop + 'px';
+    } else {
+      if (Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 10) {
+        clearTimeout(el.longPressTimeout);
+      }
+    }
+  }
+
+  function touchEndEvent(e) {
+    const el = e.currentTarget;
+    clearTimeout(el.longPressTimeout);
+    if (!el.isDragging) return;
+    const touch = e.changedTouches[0];
+    // Obtenemos el elemento en la posición final del toque
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    // Buscamos la celda del calendario que tenga el atributo data-date
+    const dayCell = dropTarget ? dropTarget.closest('.calendar-day[data-date]') : null;
+    if (dayCell && dayCell.dataset.date) {
+      moverEventoADia(el.dataset.id, dayCell.dataset.date);
+    }
+    // Limpiar clon flotante y estados
+    if (el.floatingClone) {
+      document.body.removeChild(el.floatingClone);
+      el.floatingClone = null;
+    }
+    el.classList.remove('hidden-during-drag');
+    el.isDragging = false;
+    el.classList.remove('dragging');
+  }
+
+  // =======================================================================
+  // Gestión del Modal de Eventos (Nuevo/Edición/Eliminación)
+  // =======================================================================
   function abrirEventModal(ev, dateStr) {
     eventModalEl.classList.add('active');
     if (ev) {
+      // Configuración para editar un evento existente
       eventModalTitle.textContent = 'Editar Evento';
       eventSubTitle.textContent = `Fecha: ${ev.date}`;
       inputEventId.value = ev.id;
@@ -284,6 +395,7 @@ const CalendarModule = (function() {
       document.getElementById('eventGrade').value = ev.grade || '';
       document.getElementById('gradeSection').style.display = ev.graded ? 'block' : 'none';
     } else {
+      // Configuración para crear un nuevo evento
       eventModalTitle.textContent = 'Nuevo Evento';
       eventSubTitle.textContent = `Fecha: ${dateStr}`;
       inputEventId.value = '';
@@ -296,10 +408,12 @@ const CalendarModule = (function() {
       document.getElementById('gradeSection').style.display = 'none';
     }
   }
+  // Cierra el modal de eventos
   eventCloseBtn.addEventListener('click', () => {
     eventModalEl.classList.remove('active');
   });
 
+  // Procesa el formulario del evento (creación o edición)
   eventForm.addEventListener('submit', e => {
     e.preventDefault();
     const id = inputEventId.value;
@@ -310,11 +424,13 @@ const CalendarModule = (function() {
     const gradeValue = document.getElementById('eventGrade').value.trim();
     if (!title) return;
     if (id) {
+      // Actualiza evento existente
       const idx = events.findIndex(ev => ev.id === id);
       if (idx !== -1) {
         events[idx] = { ...events[idx], title, desc, date, graded: isGraded, grade: isGraded ? gradeValue : null };
       }
     } else {
+      // Crea nuevo evento
       const newEv = {
         id: generarID(),
         title,
@@ -324,6 +440,7 @@ const CalendarModule = (function() {
         grade: isGraded ? gradeValue : null
       };
       events.push(newEv);
+      // Si el título sugiere un examen, se genera automáticamente una tarea relacionada
       if (/examen/i.test(title)) {
         const examTitle = title.replace(/examen/ig, '').trim();
         const newTaskTitle = 'Estudiar ' + examTitle;
@@ -351,6 +468,7 @@ const CalendarModule = (function() {
     eventModalEl.classList.remove('active');
     renderCalendar();
   });
+  // Botón para eliminar evento
   btnEliminarEvento.addEventListener('click', () => {
     const id = inputEventId.value;
     if (!id) return;
@@ -361,6 +479,9 @@ const CalendarModule = (function() {
     renderCalendar();
   });
 
+  // =======================================================================
+  // Controles de Navegación y Cambio de Vista
+  // =======================================================================
   btnWeek.addEventListener('click', () => {
     calendarMode = 'week';
     btnWeek.classList.add('active');
@@ -382,6 +503,7 @@ const CalendarModule = (function() {
   btnPrevMonth.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
   btnNextMonth.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
 
+  // Cierre de modales con la tecla Escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (calendarModalEl.classList.contains('active')) {
@@ -393,6 +515,9 @@ const CalendarModule = (function() {
     }
   });
 
+  // =======================================================================
+  // Inicialización del Módulo
+  // =======================================================================
   function init() {
     cargarEventos();
     renderCalendar();
@@ -405,4 +530,5 @@ const CalendarModule = (function() {
   return { init };
 })();
 
+// Inicia el módulo del calendario
 CalendarModule.init();

@@ -5,48 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tasks</title>
 
-  <!-- Fuentes y Estilos -->
+  <!-- Importación de fuentes y estilos generales -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <!-- Flatpickr CSS -->
-  <!-- Se comenta el tema material_blue para evitar estilos no deseados -->
+  <!-- Estilos de Flatpickr -->
+  <!-- Tema "material_blue" comentado para evitar conflictos de estilos -->
   <!--
   <link id="flatpickrTheme" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css" />
   -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 
-  <!-- Hoja de Estilos Principal -->
+  <!-- Hoja de estilos principal de la aplicación -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <!-- Encabezado -->
+  <!-- =====================
+       SECCIÓN: CABECERA
+       ===================== -->
   <header>
     <h1>Tasks</h1>
 
-    <!-- Buscador de tareas -->
+    <!-- Área de búsqueda de tareas -->
     <div class="search-container">
       <i class="fa-solid fa-magnifying-glass icon-theme"></i>
       <input type="text" id="searchInput" placeholder="Buscar tarea..." autocomplete="off" />
     </div>
 
+    <!-- Botonera de acciones en el header -->
     <div class="header-buttons">
-      <!-- Botón para cambiar de Tema (solo ícono) -->
+      <!-- Botón para alternar el tema (modo oscuro/claro) -->
       <button class="header-button" id="themeToggle">
         <i class="fa-solid fa-moon icon-theme" id="themeIcon"></i>
       </button>
-      <!-- Botón Nueva Tarea -->
+      <!-- Botón para agregar una nueva tarea -->
       <button class="header-button" id="btnNuevaTarea">
         <i class="fa-solid fa-plus icon-theme"></i>
         <span>Nueva Tarea</span>
       </button>
-      <!-- Botón para acceder al calendario -->
+      <!-- Botón para mostrar el calendario -->
       <button class="header-button" id="btnToggleCalendar">
         <i class="fa-solid fa-calendar-days icon-theme"></i>
         <span>Calendario</span>
       </button>
-      <!-- Botón Archivo (Exportar/Importar) -->
+      <!-- Menú desplegable para operaciones de archivo (Exportar/Importar) -->
       <div class="dropdown">
         <button class="header-button" id="btnArchivo">
           <i class="fa-solid fa-file icon-theme"></i>
@@ -60,51 +63,62 @@
     </div>
   </header>
 
-  <!-- Menú de pestañas para móviles (visible solo en modo móvil) -->
+  <!-- =============================
+       SECCIÓN: PESTAÑAS PARA MÓVILES
+       (Solo visible en dispositivos móviles)
+       ============================= -->
   <div class="mobile-tabs">
     <button data-tab="por-hacer" class="tab-button active">Por Hacer</button>
     <button data-tab="mi-dia" class="tab-button">Mi Día</button>
     <button data-tab="hechas" class="tab-button">Hechas</button>
   </div>
 
-  <!-- Contenedor Principal de Tareas -->
+  <!-- =============================
+       SECCIÓN: CONTENEDOR PRINCIPAL DE TAREAS
+       ============================= -->
   <main class="contenedor">
-    <!-- Columna: Por Hacer -->
+    <!-- Columna: Tareas Pendientes -->
     <div class="columna" data-columna="por-hacer">
       <h2>Por Hacer</h2>
       <div class="contenedor-tareas" id="por-hacer" data-columna="por-hacer"></div>
     </div>
-    <!-- Columna: Mi Día -->
+    <!-- Columna: Tareas para el Día -->
     <div class="columna" data-columna="mi-dia">
       <h2>Mi Día</h2>
       <div class="contenedor-tareas" id="mi-dia" data-columna="mi-dia"></div>
     </div>
-    <!-- Columna: Hechas -->
+    <!-- Columna: Tareas Completadas -->
     <div class="columna" data-columna="hechas">
       <h2>Hechas</h2>
       <div class="contenedor-tareas" id="hechas" data-columna="hechas"></div>
     </div>
   </main>
 
-  <!-- Modal para Crear/Editar Tareas -->
+  <!-- =============================
+       MODAL: CREAR/EDITAR TAREAS
+       ============================= -->
   <div id="modal" class="modal">
     <div class="modal-content">
-      <!-- Cerrar Modal -->
+      <!-- Botón para cerrar el modal -->
       <span class="close"><i class="fa-solid fa-xmark icon-theme"></i></span>
       <h2 id="modal-title">Nueva Tarea</h2>
       <form id="taskForm" autocomplete="off">
+        <!-- Campo oculto para el ID de la tarea (para edición) -->
         <input type="hidden" id="taskId" />
 
+        <!-- Grupo: Título de la tarea -->
         <div class="form-group">
           <label for="titulo">Título:</label>
           <input type="text" id="titulo" required autocomplete="off" />
         </div>
 
+        <!-- Grupo: Descripción de la tarea -->
         <div class="form-group">
           <label for="descripcion">Descripción:</label>
           <textarea id="descripcion" autocomplete="off"></textarea>
         </div>
 
+        <!-- Grupo: Fecha de vencimiento utilizando Flatpickr -->
         <div class="form-group">
           <label class="calendar-label" for="vencimiento">
             <i class="fa-regular fa-calendar icon-theme"></i> Fecha de Vencimiento:
@@ -112,6 +126,7 @@
           <input type="text" id="vencimiento" placeholder="Selecciona fecha..." autocomplete="off" />
         </div>
 
+        <!-- Sección: Pasos de la Tarea -->
         <div class="steps-section">
           <h3>Pasos de la Tarea</h3>
           <div id="stepsContainer"></div>
@@ -120,6 +135,7 @@
           </button>
         </div>
 
+        <!-- Grupo: Acciones (Guardar/Eliminar) -->
         <div class="actions">
           <button type="submit" class="btn-save">
             <i class="fa-solid fa-floppy-disk"></i> Guardar
@@ -132,24 +148,26 @@
     </div>
   </div>
 
-  <!-- Modal del Calendario (Overlay) -->
+  <!-- =============================
+       MODAL: CALENDARIO (Vista de Superposición)
+       ============================= -->
   <div id="calendarModal" class="calendar-modal">
     <div class="calendar-modal-content">
-      <!-- Botón de cierre -->
+      <!-- Botón para cerrar el calendario -->
       <span class="calendar-close" id="btnCloseCalendar">
         <i class="fa-solid fa-xmark icon-theme"></i>
       </span>
 
-      <!-- Fila: Selector Modo + Flechas de nav -->
+      <!-- Encabezado del Calendario: Selector de modo y navegación -->
       <div class="calendar-header-row">
         <div class="left-container">
-          <!-- Selector de modo (semana / mes) -->
+          <!-- Alternador de modo: Semana/Mes -->
           <div class="calendar-mode-toggle segmented-control">
             <button id="btnWeek" class="week-button">Semana</button>
             <button id="btnMonth" class="active">Mes</button>
           </div>
 
-          <!-- Flechas para Mes y Semana -->
+          <!-- Controles de navegación (mes o semana según el modo) -->
           <div class="calendar-nav">
             <button id="btnPrevMonth" class="calendar-nav-button month-only" title="Mes anterior">
               <i class="fa-solid fa-chevron-up"></i>
@@ -167,35 +185,44 @@
         </div>
       </div>
 
+      <!-- Título dinámico del calendario -->
       <h2 id="calendarTitle"></h2>
-      <!-- Contenedor dinámico para los días (semana/mes) -->
+      <!-- Lista dinámica para mostrar los días (vista semana/mes) -->
       <ul id="calendarList"></ul>
     </div>
   </div>
 
-  <!-- Modal para Crear/Editar Eventos (con UI mejorada) -->
+  <!-- =============================
+       MODAL: CREAR/EDITAR EVENTOS
+       (Interfaz mejorada para eventos)
+       ============================= -->
   <div id="eventModal" class="modal">
     <div class="modal-content event-modal-content">
-      <!-- Botón de Cierre -->
-      <span class="close" id="eventCloseBtn"><i class="fa-solid fa-xmark icon-theme"></i></span>
+      <!-- Botón para cerrar el modal de eventos -->
+      <span class="close" id="eventCloseBtn">
+        <i class="fa-solid fa-xmark icon-theme"></i>
+      </span>
       <h2 id="eventModalTitle" class="event-title">Nuevo Evento</h2>
       <small id="eventSubTitle" class="event-subtitle"></small>
 
       <form id="eventForm" autocomplete="off">
+        <!-- Campos ocultos para ID y fecha del evento -->
         <input type="hidden" id="eventId" />
         <input type="hidden" id="eventDate" />
 
+        <!-- Grupo: Título del evento -->
         <div class="form-group">
           <label for="eventTitle">Título del Evento:</label>
           <input type="text" id="eventTitle" required autocomplete="off" />
         </div>
 
+        <!-- Grupo: Descripción del evento -->
         <div class="form-group">
           <label for="eventDesc">Descripción del Evento:</label>
           <textarea id="eventDesc" autocomplete="off"></textarea>
         </div>
 
-        <!-- Toggle para marcar como Calificado -->
+        <!-- Alternador: Marcar evento como calificado -->
         <div class="form-group toggle-container">
           <label class="switch">
             <input type="checkbox" id="gradedEvent">
@@ -204,11 +231,13 @@
           <span class="toggle-label">Marcar como Calificado</span>
         </div>
 
+        <!-- Sección condicional: Ingreso de calificación -->
         <div class="form-group" id="gradeSection" style="display: none;">
           <label for="eventGrade">Calificación:</label>
           <input type="text" id="eventGrade" placeholder="Introduce la calificación (sobre 10)" />
         </div>
 
+        <!-- Grupo: Acciones (Guardar/Eliminar) -->
         <div class="actions">
           <button type="submit" class="btn-save">
             <i class="fa-solid fa-floppy-disk"></i> Guardar
@@ -221,19 +250,24 @@
     </div>
   </div>
 
-  <!-- Flatpickr principal -->
+  <!-- =============================
+       IMPORTACIÓN DE SCRIPTS EXTERNOS
+       ============================= -->
+  <!-- Script de Flatpickr principal -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <!-- Locale español para Flatpickr -->
+  <!-- Localización en español para Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
-  <!-- Lógica de la aplicación de Tareas -->
+  <!-- Lógica de la aplicación de tareas -->
   <script src="app.js"></script>
-  <!-- Lógica del Calendario con Vista Semanal y Mensual -->
+  <!-- Lógica del calendario (vista semanal y mensual) -->
   <script src="calendar.js"></script>
-  <!-- Script para manejo de exportar/importar datos -->
+  <!-- Funcionalidades para exportar/importar datos -->
   <script src="exportImport.js"></script>
   
-  <!-- Script para manejar las pestañas móviles -->
+  <!-- =============================
+       SCRIPT: MANEJO DE PESTAÑAS MÓVILES
+       ============================= -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const mobileTabs = document.querySelector('.mobile-tabs');
@@ -241,6 +275,7 @@
         const tabButtons = mobileTabs.querySelectorAll('.tab-button');
         const columns = document.querySelectorAll('main.contenedor .columna');
 
+        // Actualiza la visualización según la pestaña activa
         function updateMobileTabs() {
           const activeTab = mobileTabs.querySelector('.tab-button.active').getAttribute('data-tab');
           columns.forEach(col => {
@@ -248,6 +283,7 @@
           });
         }
 
+        // Asignar evento de cambio de pestaña
         tabButtons.forEach(btn => {
           btn.addEventListener('click', function() {
             tabButtons.forEach(b => b.classList.remove('active'));
@@ -256,6 +292,7 @@
           });
         });
 
+        // Control de visibilidad de pestañas según el ancho de la ventana
         function handleResize() {
           if (window.innerWidth <= 768) {
             mobileTabs.style.display = 'flex';
